@@ -1,6 +1,6 @@
 import { Page } from "./InfoScreens";
-import { Slider } from "../components/ui/slider";
 import { Switch } from "../components/ui/switch";
+import { Slider } from "../components/ui/slider";
 
 const Group = ({ label, desc, options, value, onChange, testId }) => (
   <div className="rb-card p-5">
@@ -11,6 +11,25 @@ const Group = ({ label, desc, options, value, onChange, testId }) => (
         <button key={v} data-testid={`${testId}-${v}`} className={`rb-btn text-sm ${value === v ? "rb-dark" : "rb-white"}`} onClick={() => onChange(v)}>{l}</button>
       ))}
     </div>
+  </div>
+);
+
+const VolumeControl = ({ label, value, onChange, testId, disabled = false }) => (
+  <div className="rb-card p-5">
+    <div className="mb-4 flex items-center justify-between gap-3">
+      <p className="rb-display text-xl font-extrabold">{label}</p>
+      <span className="text-sm font-semibold tabular-nums" aria-live="polite">{value}%</span>
+    </div>
+    <Slider
+      min={0}
+      max={100}
+      step={1}
+      value={[value]}
+      onValueChange={([next]) => onChange(next)}
+      disabled={disabled}
+      data-testid={testId}
+      aria-label={label}
+    />
   </div>
 );
 
@@ -30,10 +49,9 @@ export default function SettingsScreen({ settings, onChange, onBack }) {
           options={[["guided", "Berpandu"], ["mental", "Matematik Mental"], ["challenge", "Cabaran"]]} />
         <Group label="Kesukaran masa" desc="Mengubah kesabaran pelanggan dan panjang syif." testId="setting-timer" value={settings.timerDifficulty} onChange={set("timerDifficulty")}
           options={[["santai", "Santai"], ["biasa", "Biasa"], ["sukar", "Sukar"]]} />
-        <div className="rb-card p-5">
-          <p className="rb-display text-xl font-extrabold">Kelantangan: {settings.volume}%</p>
-          <Slider data-testid="setting-volume" className="mt-4" value={[settings.volume]} max={100} step={5} onValueChange={([v]) => set("volume")(v)} />
-        </div>
+        <VolumeControl label="Kelantangan kesan bunyi permainan" value={settings.volume} onChange={set("volume")} testId="setting-volume" />
+        <Toggle label="Muzik latar" desc="Muzik bermula selepas interaksi pertama dengan permainan." testId="setting-music-enabled" checked={settings.musicEnabled} onChange={set("musicEnabled")} />
+        <VolumeControl label="Kelantangan muzik" value={settings.musicVolume} onChange={set("musicVolume")} testId="setting-music-volume" disabled={!settings.musicEnabled} />
         <Group label="Saiz teks" testId="setting-text-size" value={settings.textSize} onChange={set("textSize")}
           options={[["normal", "Biasa"], ["large", "Besar"], ["xlarge", "Sangat besar"]]} />
         <Toggle label="Kurangkan gerakan" desc="Mematikan kebanyakan animasi." testId="setting-reduced-motion" checked={settings.reducedMotion} onChange={set("reducedMotion")} />

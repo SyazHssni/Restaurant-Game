@@ -1,4 +1,12 @@
 let ctx = null;
+
+export function getAudioContext() {
+  if (typeof window === "undefined") return null;
+  const AudioContextType = window.AudioContext || window.webkitAudioContext;
+  if (!AudioContextType) return null;
+  ctx = ctx || new AudioContextType();
+  return ctx;
+}
 const SOUNDS = {
   bell: [[880, 0.08], [1320, 0.12]],
   ding: [[1046, 0.1]],
@@ -19,16 +27,18 @@ const SOUNDS = {
 export function playSound(name, volume) {
   if (!volume || !SOUNDS[name]) return;
   try {
-    ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
-    let t = ctx.currentTime;
+    const audio = getAudioContext();
+    if (!audio) return;
+    if (audio.state === "suspended") audio.resume().catch(() => {});
+    let t = audio.currentTime;
     SOUNDS[name].forEach(([f, d, type = "sine"]) => {
-      const o = ctx.createOscillator();
-      const g = ctx.createGain();
+      const o = audio.createOscillator();
+      const g = audio.createGain();
       o.type = type;
       o.frequency.value = f;
       g.gain.setValueAtTime((volume / 100) * 0.15, t);
       g.gain.exponentialRampToValueAtTime(0.0001, t + d);
-      o.connect(g).connect(ctx.destination);
+      o.connect(g).connect(audio.destination);
       o.start(t);
       o.stop(t + d + 0.02);
       t += d * 0.9;

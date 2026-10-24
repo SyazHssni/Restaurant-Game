@@ -17,7 +17,10 @@ export default function MainMenu({ save, onNew, onContinue, onRestartBusiness, g
       <div className="space-y-8">
         <div className="rb-rise">
           <p className="inline-block bg-[var(--mustard)] border-2 border-[var(--charcoal)] rounded-full px-4 py-1 text-sm font-semibold">Operasi gabungan melibatkan wang</p>
-          <h1 className="rb-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.9] mt-4 text-[var(--tomato)]" style={{ textShadow: "4px 4px 0 var(--charcoal)" }}>Rush Bite</h1>
+          <div className="flex items-center gap-2 mt-4">
+            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo Rush Bite" className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 border-[var(--charcoal)] shadow-[3px_3px_0_var(--charcoal)] object-cover shrink-0" />
+            <h1 className="rb-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.9] text-[var(--tomato)]" style={{ textShadow: "4px 4px 0 var(--charcoal)" }}>Rush Bite</h1>
+          </div>
           <p className="rb-display text-2xl sm:text-3xl font-bold mt-2">Kedai Burger Matematik</p>
           <p className="text-base mt-3 max-w-lg text-[var(--muted)]">Ambil pesanan, kira bil dan baki dalam kepala, beri wang baki yang tepat, kemudian masak dan hidangkan. Kira betul — kedai untung. Selalu salah — kedai boleh muflis!</p>
         </div>

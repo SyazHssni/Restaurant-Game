@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import "@/App.css";
 import MainMenu from "./screens/MainMenu";
 import ShiftScreen from "./screens/ShiftScreen";
@@ -8,6 +8,8 @@ import { HowToPlay, Credits, MenuScreen } from "./screens/InfoScreens";
 import { loadSave, writeSave, newSave, loadSettings, writeSettings } from "./game/storage";
 import { buildSummary } from "./game/summary";
 import { UNLOCK_NOTES } from "./game/config";
+import { getAudioContext, playSound } from "./game/sound";
+import { setMusicVolume, startBackgroundMusic, stopBackgroundMusic } from "./game/music";
 
 const FONT = { normal: "16px", large: "18px", xlarge: "20px" };
 
@@ -17,6 +19,44 @@ function App() {
   const [settings, setSettings] = useState(loadSettings);
   const [summary, setSummary] = useState(null);
   const [run, setRun] = useState(null);
+  const settingsRef = useRef(settings);
+  const audioUnlocked = useRef(false);
+
+  useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  useEffect(() => {
+    const unlockAudio = () => {
+      audioUnlocked.current = true;
+      try {
+        const audio = getAudioContext();
+        if (audio && audio.state === "suspended") audio.resume().catch(() => {});
+      } catch { /* HTML audio can still play if Web Audio is unavailable */ }
+      const current = settingsRef.current;
+      if (current.musicEnabled) startBackgroundMusic(current.musicVolume);
+    };
+    const handleVisibility = () => {
+      const current = settingsRef.current;
+      if (document.hidden) stopBackgroundMusic();
+      else if (audioUnlocked.current && current.musicEnabled) startBackgroundMusic(current.musicVolume);
+    };
+    window.addEventListener("pointerdown", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+      document.removeEventListener("visibilitychange", handleVisibility);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (settings.musicEnabled) {
+      setMusicVolume(settings.musicVolume);
+      if (audioUnlocked.current) startBackgroundMusic(settings.musicVolume);
+    } else {
+      stopBackgroundMusic();
+    }
+  }, [settings.musicEnabled, settings.musicVolume]);
 
   useEffect(() => {
     const h = document.documentElement;
@@ -51,9 +91,15 @@ function App() {
 
   const updateSettings = (s) => { setSettings(s); writeSettings(s); };
   const back = () => setScreen("menu");
+  const playUiClick = (event) => {
+    const target = event.target;
+    if (screen !== "shift" && target && typeof target.closest === "function" && target.closest("button")) {
+      playSound("tap", settings.volume);
+    }
+  };
 
   return (
-    <div className="rb-app">
+    <div className="rb-app" onClickCapture={playUiClick}>
       {screen === "menu" && <MainMenu save={save} onNew={onNew} onContinue={() => start(save, !save.tutorialDone && save.day === 1)} onRestartBusiness={restartBusiness} go={setScreen} />}
       {screen === "howto" && <HowToPlay onBack={back} onReplayTutorial={() => start(save && !save.bankrupt ? save : newSave(save), true)} />}
       {screen === "settings" && <SettingsScreen settings={settings} onChange={updateSettings} onBack={back} />}

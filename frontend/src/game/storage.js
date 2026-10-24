@@ -3,7 +3,7 @@ import { START_FUNDS, START_REPUTATION } from "./config";
 const SAVE_KEY = "rushbite_save_v1";
 const SETTINGS_KEY = "rushbite_settings_v1";
 
-export const DEFAULT_SETTINGS = { volume: 70, reducedMotion: false, textSize: "normal", highContrast: false, timerDifficulty: "biasa", mathMode: "challenge" };
+export const DEFAULT_SETTINGS = { volume: 70, musicEnabled: true, musicVolume: 30, reducedMotion: false, textSize: "normal", highContrast: false, timerDifficulty: "biasa", mathMode: "challenge" };
 
 export const newSave = (prev) => ({
   day: 1, funds: START_FUNDS, reputation: START_REPUTATION, insolventShifts: 0, bankrupt: false,
