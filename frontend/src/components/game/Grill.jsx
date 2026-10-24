@@ -53,7 +53,7 @@ export const Grill = () => {
         <OrderPicker filter={(x) => pattiesNeeded(s, x, "beef") > 0 || pattiesNeeded(s, x, "veg") > 0} emptyText="Tiada tiket berbayar yang perlukan patty." />
       </StationHeader>
       <div className="flex items-center gap-3 flex-wrap mb-4">
-        {o ? <p className="text-sm font-semibold" data-testid="grill-selected-info">Tiket #{o.num}: perlu {beef} patty daging{veg > 0 ? `, ${veg} patty sayur` : ""} lagi</p>
+        {o ? <p className="text-sm font-semibold" data-testid="grill-selected-info">Tiket #{o.num}: {beef + veg === 0 ? "patty sudah mencukupi (termasuk simpanan)" : `perlu ${[beef && `${beef} patty daging`, veg && `${veg} patty sayur`].filter(Boolean).join(" dan ")} lagi`}</p>
           : <p className="text-sm text-[var(--muted)]">Pilih tiket berbayar untuk mula memasak.</p>}
         <button data-testid="grill-add-beef" className="rb-btn rb-red" disabled={!o || beef <= 0 || !free} onClick={() => dispatch({ type: "GRILL_ADD", orderId: o.id, patty: "beef" })}>Letak Patty Daging</button>
         {beef > 1 && <button data-testid="grill-add-all-beef" className="rb-btn rb-red" disabled={!free} onClick={() => dispatch({ type: "GRILL_ADD_ALL", orderId: o.id, patty: "beef" })}>Letak Semua ({beef})</button>}

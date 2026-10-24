@@ -12,7 +12,7 @@ export const TutorialCard = () => {
   const st = TUTORIAL_STEPS[i];
   const last = i === TUTORIAL_STEPS.length - 1;
   return (
-    <div className="fixed bottom-4 left-4 z-40 w-[340px] max-w-[calc(100vw-2rem)] rb-card p-5 border-[var(--charcoal)] rb-rise" key={i} data-testid="tutorial-card" role="dialog" aria-label="Tutorial">
+    <div className="fixed bottom-4 left-3 z-40 w-[300px] max-w-[calc(100vw-2rem)] rb-card p-5 border-[var(--charcoal)] rb-rise" key={i} data-testid="tutorial-card" role="dialog" aria-label="Tutorial">
       <div className="flex items-center gap-2 text-xs font-semibold text-[var(--muted)]">
         <GraduationCap size={16} /> Tutorial · Langkah {i + 1}/{TUTORIAL_STEPS.length}
       </div>

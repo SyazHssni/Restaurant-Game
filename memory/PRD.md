@@ -18,6 +18,12 @@ User uploaded `fast_food_restaurant_game_master_prompt.md` (master build prompt 
 - Scoring (55/25/20), stars, tips, refunds, reputation, at-risk warning, insolvency/bankruptcy + restart
 - End-of-shift summary (money ledger adds up, maths vs food results, worked example), day progression with unlocks (Days 1–5 content, scalable beyond)
 
+## Iteration 2 — 2026-06
+- Burger catalogue: 116 unique menus generated from the 9 ingredients only (4 shop specials + every sensible combo; unique names and unique ingredient sets), unlocking by day; "Menu Burger" screen (main menu) and in-shift "Buku Menu" dialog with "Nama Menu / Bahan" text format, filters, search, availability
+- Ingredient stock per shift (assembly + grill use stock; 0 = disabled; menus needing missing stock not ordered; "Pesan +10" restock arrives in 15 s, free)
+- Grill: 4 slots, "Letak Semua", spare (Simpanan) patties usable for any ticket
+- Drinks overhaul: 27 drinks, size + temperature (per-drink allowed temps), quantity, Sediakan → Sahkan Penyediaan with per-line status (Belum Disediakan / Sedang Disediakan / Siap / Perlu Dibetulkan) and error messages
+
 ## Backlog
 - P1 (Phase 2): between-shift upgrade shop (10+ upgrades), décor (12+), recipe book, 20-day campaign tuning, 12+ achievements, daily goals, colour-blind palette, keyboard shortcut list
 - P2 (Phase 3): drive-through (Day 5+), combos, milkshakes, desserts, rush-hour/family events, food critic day, more sound/animation polish

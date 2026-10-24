@@ -24,7 +24,8 @@ const OrderDrinks = ({ o }) => {
       {lines.map((l) => {
         const d = o.units.filter((u) => u.lid === l.lid && u.state !== "todo").length;
         const issues = o.drinkIssues && o.drinkIssues[l.lid];
-        const status = d >= l.qty ? "Siap" : issues ? "Perlu Dibetulkan" : inTray ? "Sedang Disediakan" : "Belum Disediakan";
+        const working = inTray && s.drinkTray.cups.some((c) => c.flavour === l.flavour);
+        const status = d >= l.qty ? "Siap" : working ? "Sedang Disediakan" : issues ? "Perlu Dibetulkan" : d > 0 ? "Sedang Disediakan" : "Belum Disediakan";
         return (
           <div key={l.lid} className="border-b border-dashed border-[var(--line)] pb-2" data-testid={`drink-line-${l.lid}`}>
             <div className="flex justify-between gap-2 items-start">
@@ -92,8 +93,10 @@ const Config = ({ o }) => {
 const Tray = ({ o, feedback }) => {
   const { state: s, dispatch } = useGame();
   const t = s.drinkTray && s.drinkTray.orderId === o.id ? s.drinkTray : null;
+  const other = s.drinkTray && s.drinkTray.orderId !== o.id ? s.drinkTray : null;
   return (
     <div className="space-y-2">
+      {other && <p className="text-xs font-semibold text-[var(--tomato-dark)]" data-testid="drink-tray-other">Dulang sedang digunakan untuk tiket #{other.orderNum}. Pilih tiket itu untuk mengesahkan atau mengosongkan dulang.</p>}
       <p className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Dulang minuman disediakan</p>
       <div className="min-h-[52px] rounded-2xl border-2 border-dashed border-[var(--charcoal)] bg-[#e8f3f7] p-2 flex flex-wrap gap-2" data-testid="drink-tray">
         {!t && <span className="text-sm text-[var(--muted)] p-1">Dulang kosong</span>}

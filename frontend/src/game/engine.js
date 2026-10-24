@@ -107,7 +107,8 @@ export function pattiesNeeded(s, o, type) {
   const inAsm = s.assembly && s.assembly.orderId === o.id ? s.assembly.layers.filter((l) => l.ing === `patty_${type}`).length : 0;
   const held = s.pattyTray.filter((p) => p.orderId === o.id && p.type === type).length;
   const onGrill = s.grill.filter((g) => g && g.orderId === o.id && g.type === type && grillStatus(g).key !== "burnt").length;
-  return need - inAsm - held - onGrill;
+  const spare = s.pattyTray.filter((p) => p.orderId === null && p.type === type).length;
+  return Math.max(0, need - inAsm - held - onGrill - spare);
 }
 
 function cleanupOrder(s, o) {

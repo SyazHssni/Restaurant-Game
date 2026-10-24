@@ -22,7 +22,7 @@ const MenuDialog = () => {
   const open = !!s.menuOpen;
   return (
     <Dialog open={open} onOpenChange={(v) => dispatch({ type: v ? "OPEN_MENU" : "CLOSE_MENU" })}>
-      <DialogContent className="max-w-6xl max-h-[88vh] overflow-y-auto rb-scroll bg-[var(--cream)]" data-testid="menu-dialog">
+      <DialogContent onEscapeKeyDown={(e) => e.stopPropagation()} className="max-w-6xl max-h-[88vh] overflow-y-auto rb-scroll bg-[var(--cream)]" data-testid="menu-dialog">
         <DialogHeader>
           <DialogTitle className="rb-display text-3xl">Buku Menu & Stok Bahan</DialogTitle>
           <DialogDescription>Menu yang memerlukan bahan berstok sifar tidak akan dipesan oleh pelanggan sehingga stok dikemas kini. Permainan dijeda semasa buku menu dibuka.</DialogDescription>
