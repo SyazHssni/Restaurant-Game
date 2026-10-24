@@ -146,7 +146,7 @@ export const DRINK_GAME = {
   ice: { S: 2, M: 3, L: 4 },
   heat: { rate: 22, start: 25, target: [70, 85], burn: 96 },
   pour: { rate: { S: 0.42, M: 0.36, L: 0.3 }, target: [0.85, 1.0], spill: 1.15 },
-  stir: { speed: 1.3, sweet: [0.4, 0.6], hits: { teh_tarik: 3, kopi_susu: 2, latte: 2, coklat_panas: 2, coklat_ais: 2, susu_segar: 1, bandung: 2, air_jagung: 1, teh_o_limau: 1, sirap_limau: 1 } },
+  stir: { speed: 0.8, sweet: [0.38, 0.62], hits: { teh_tarik: 3, kopi_susu: 2, latte: 2, coklat_panas: 2, coklat_ais: 2, susu_segar: 1, bandung: 2, air_jagung: 1, teh_o_limau: 1, sirap_limau: 1 } },
 };
 export function drinkSteps(flavour, temp) {
   const steps = [];

@@ -25,7 +25,8 @@ const OrderDrinks = ({ o }) => {
       {lines.map((l) => {
         const d = o.units.filter((u) => u.lid === l.lid && u.state !== "todo").length;
         const issues = o.drinkIssues && o.drinkIssues[l.lid];
-        const working = inTray && s.drinkTray.cups.some((c) => c.flavour === l.flavour);
+        const same = (c) => c && c.flavour === l.flavour && c.size === l.size && c.temp === l.temp;
+        const working = (inTray && s.drinkTray.cups.some(same)) || (s.drinkPrep && s.drinkPrep.orderId === o.id && same(s.drinkPrep));
         const status = d >= l.qty ? "Siap" : working ? "Sedang Disediakan" : issues ? "Perlu Dibetulkan" : d > 0 ? "Sedang Disediakan" : "Belum Disediakan";
         return (
           <div key={l.lid} className="border-b border-dashed border-[var(--line)] pb-2" data-testid={`drink-line-${l.lid}`}>
@@ -101,8 +102,8 @@ const Config = ({ o }) => {
 
 const Tray = ({ o, feedback }) => {
   const { state: s, dispatch } = useGame();
-  const t = s.drinkTray && s.drinkTray.orderId === o.id ? s.drinkTray : null;
-  const other = s.drinkTray && s.drinkTray.orderId !== o.id ? s.drinkTray : null;
+  const t = s.drinkTray && s.drinkTray.orderId === o.id && s.drinkTray.cups.length ? s.drinkTray : null;
+  const other = s.drinkTray && s.drinkTray.orderId !== o.id && s.drinkTray.cups.length ? s.drinkTray : null;
   return (
     <div className="space-y-2">
       {other && <p className="text-xs font-semibold text-[var(--tomato-dark)]" data-testid="drink-tray-other">Dulang sedang digunakan untuk tiket #{other.orderNum}. Pilih tiket itu untuk mengesahkan atau mengosongkan dulang.</p>}
@@ -118,8 +119,8 @@ const Tray = ({ o, feedback }) => {
         ))}
       </div>
       <div className="flex gap-2">
-        <button data-testid="drink-confirm-button" className="rb-btn rb-green" disabled={!t} onClick={() => dispatch({ type: "DRINK_CONFIRM" })}>Sahkan Penyediaan</button>
-        <button data-testid="drink-clear-button" className="rb-btn rb-white" disabled={!t} onClick={() => dispatch({ type: "DRINK_CLEAR" })}>Kosongkan Dulang</button>
+        <button data-testid="drink-confirm-button" className="rb-btn rb-green" disabled={!t || !!s.drinkPrep} onClick={() => dispatch({ type: "DRINK_CONFIRM" })}>Sahkan Penyediaan</button>
+        <button data-testid="drink-clear-button" className="rb-btn rb-white" disabled={!t || !!s.drinkPrep} onClick={() => dispatch({ type: "DRINK_CLEAR" })}>Kosongkan Dulang</button>
       </div>
       {feedback && (
         <div data-testid="drink-feedback" className={`rounded-xl border-2 px-3 py-2 text-sm space-y-1 ${feedback.ok ? "bg-[#e5f4dc] border-[var(--lettuce)]" : "bg-[#fde3dc] border-[var(--tomato)]"}`}>

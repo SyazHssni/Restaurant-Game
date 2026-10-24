@@ -24,6 +24,10 @@ User uploaded `fast_food_restaurant_game_master_prompt.md` (master build prompt 
 - Grill: 4 slots, "Letak Semua", spare (Simpanan) patties usable for any ticket
 - Drinks overhaul: 27 drinks, size + temperature (per-drink allowed temps), quantity, Sediakan → Sahkan Penyediaan with per-line status (Belum Disediakan / Sedang Disediakan / Siap / Perlu Dibetulkan) and error messages
 
+## Iteration 3 — 2026-06
+- Drink-making minigame for every drink and every cup: ice cubes (sejuk, by cup size) / hold-to-heat to 70–85°C (panas) → hold-to-pour to the line (spill >115% wastes a cup) → timing "Tarik/Kacau" (teh tarik, kopi susu, latte, coklat, bandung…) or "Tutup cawan"; cup quality feeds food score; Space key supported
+- Bulk orders from Day 4 (30% → 40% Day 5, rising after): 2–4 burgers, 2–3 drinks, 1–2 fries, maybe chicken bites; up to 10 items; "Pesanan Besar" ticket badge
+
 ## Backlog
 - P1 (Phase 2): between-shift upgrade shop (10+ upgrades), décor (12+), recipe book, 20-day campaign tuning, 12+ achievements, daily goals, colour-blind palette, keyboard shortcut list
 - P2 (Phase 3): drive-through (Day 5+), combos, milkshakes, desserts, rush-hour/family events, food critic day, more sound/animation polish

@@ -15,7 +15,7 @@ const STEP_INFO = {
 const Band = ({ value, max, lo, hi, testId, color = "var(--charcoal)" }) => (
   <div className="relative h-5 rounded-full bg-[#f1e4cc] border-2 border-[var(--line)] overflow-hidden" data-testid={testId}>
     <div className="absolute top-0 bottom-0 bg-[rgba(90,165,68,0.45)] border-x-2 border-[var(--lettuce-dark)]" style={{ left: `${(lo / max) * 100}%`, width: `${((hi - lo) / max) * 100}%` }} />
-    <div className="absolute top-[-2px] bottom-[-2px] w-2 rounded" style={{ background: color, left: `calc(${Math.min(100, (value / max) * 100)}% - 4px)` }} />
+    <div className="absolute top-[-2px] bottom-[-2px] w-2 rounded" style={{ transition: "left 0.1s linear", background: color, left: `calc(${Math.min(100, (value / max) * 100)}% - 4px)` }} />
   </div>
 );
 
@@ -93,7 +93,7 @@ export const DrinkGame = ({ dp }) => {
         })}
       </ol>
       <div className="grid md:grid-cols-[1fr_180px] gap-5 items-end">
-        <StepControls dp={dp} />
+        <StepControls key={`${dp.left}-${dp.step}`} dp={dp} />
         <div className="flex flex-col items-center bg-[#e8f3f7] rounded-2xl border-2 border-[var(--line)] p-3">
           <div className="w-20 h-5 bg-[var(--charcoal)] rounded-t-lg relative">{dp.pouring && <div className="absolute left-1/2 -translate-x-1/2 top-5 w-2 h-14 bg-[rgba(91,155,213,0.8)]" />}</div>
           <div className="relative mt-1">

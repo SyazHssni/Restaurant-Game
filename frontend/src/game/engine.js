@@ -153,7 +153,7 @@ function tick(s, dt) {
   s.fryer.forEach((b) => { if (b) b.t += dt; });
   const dp = s.drinkPrep;
   if (dp) {
-    if (dp.heating) dp.heat += DRINK_GAME.heat.rate * dt;
+    if (dp.heating) dp.heat = Math.min(100, dp.heat + DRINK_GAME.heat.rate * dt);
     if (dp.pouring) {
       dp.fill += DRINK_GAME.pour.rate[dp.size] * dt;
       if (dp.fill >= DRINK_GAME.pour.spill) {
@@ -493,7 +493,9 @@ function confirmDrinks(s) {
     if (u.flavour !== c.flavour) errs.push(`jenis ${DRINKS[c.flavour].name} (sepatutnya ${DRINKS[u.flavour].name})`);
     if (u.size !== c.size) errs.push(`saiz ${SIZE_NAMES[c.size]} (sepatutnya ${SIZE_NAMES[u.size]})`);
     if (u.temp !== c.temp) errs.push(`suhu ${TEMPS[c.temp]} (sepatutnya ${TEMPS[u.temp]})`);
-    (issues[u.lid] = issues[u.lid] || []).push(`Salah ${errs.join(", ")}.`);
+    const msg = `Salah ${errs.join(", ")}.`;
+    issues[u.lid] = issues[u.lid] || [];
+    if (!issues[u.lid].includes(msg)) issues[u.lid].push(msg);
   });
   o.drinkIssues = {};
   const msgs = [];
@@ -581,7 +583,7 @@ function drinkGame(s, a) {
     case "DRINK_GAME_CANCEL":
       s.drinkPrep = null;
       if (!s.drinkTray.cups.length) s.drinkTray = null;
-      fx(s, "Penyediaan minuman dibatalkan.", "info");
+      fx(s, "Penyediaan dibatalkan — kos cawan yang sudah digunakan tetap dikira.", "info");
       break;
     default:
   }
