@@ -8,7 +8,7 @@ function badge(s, id) {
   if (id === "register") return s.orders.filter((o) => o.status === "awaiting_payment").length;
   if (id === "grill") return s.grill.filter((g) => g && ["flip", "ready", "burnt"].includes(grillStatus(g).key)).length;
   if (id === "fryer") return s.fryer.filter((b) => b && fryStatus(b).key !== "cooking").length;
-  if (id === "drinks") return s.drink ? 1 : 0;
+  if (id === "drinks") return s.drinkTray ? s.drinkTray.cups.length : 0;
   if (id === "packing") return s.orders.filter((o) => o.status === "paid" && o.units.every((u) => u.state !== "todo")).length;
   if (id === "assembly") return s.pattyTray.length;
   return 0;

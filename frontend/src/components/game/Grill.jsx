@@ -22,7 +22,7 @@ const Slot = ({ g, i }) => {
   return (
     <div className="rounded-2xl border-2 border-[var(--charcoal)] bg-[#3a3632] p-4 text-white space-y-3" data-testid={`grill-slot-${i}`}>
       <div className="flex justify-between items-center text-sm">
-        <span className="font-semibold">Slot {i + 1} · Tiket #{g.orderNum} · {g.type === "veg" ? "Patty sayur" : "Patty daging"}</span>
+        <span className="font-semibold">Slot {i + 1} · {g.orderNum ? `Tiket #${g.orderNum}` : "Simpanan"} · {g.type === "veg" ? "Sayur" : "Daging"}</span>
         <span className={`px-2 py-0.5 rounded-full text-xs font-bold text-[var(--charcoal)] ${toneCls}`} data-testid={`grill-status-${i}`}>{st.label}</span>
       </div>
       <div className="flex justify-center py-2"><div key={g.flipped ? "b" : "a"} className="rb-flip"><PattyDisc doneness={doneness(g, st.key)} /></div></div>
@@ -46,6 +46,7 @@ export const Grill = () => {
   const o = s.orders.find((x) => x.id === s.selectedOrderId && x.status === "paid");
   const beef = o ? pattiesNeeded(s, o, "beef") : 0;
   const veg = o ? pattiesNeeded(s, o, "veg") : 0;
+  const free = s.grill.filter((g) => !g).length;
   return (
     <div data-testid="grill-station">
       <StationHeader title="Gril">
@@ -54,17 +55,23 @@ export const Grill = () => {
       <div className="flex items-center gap-3 flex-wrap mb-4">
         {o ? <p className="text-sm font-semibold" data-testid="grill-selected-info">Tiket #{o.num}: perlu {beef} patty daging{veg > 0 ? `, ${veg} patty sayur` : ""} lagi</p>
           : <p className="text-sm text-[var(--muted)]">Pilih tiket berbayar untuk mula memasak.</p>}
-        <button data-testid="grill-add-beef" className="rb-btn rb-red" disabled={!o || beef <= 0} onClick={() => dispatch({ type: "GRILL_ADD", orderId: o.id, patty: "beef" })}>Letak Patty Daging</button>
-        {(veg > 0 || s.cfg.menu.burgers.includes("garden")) && (
-          <button data-testid="grill-add-veg" className="rb-btn rb-green" disabled={!o || veg <= 0} onClick={() => dispatch({ type: "GRILL_ADD", orderId: o.id, patty: "veg" })}>Letak Patty Sayur</button>
-        )}
+        <button data-testid="grill-add-beef" className="rb-btn rb-red" disabled={!o || beef <= 0 || !free} onClick={() => dispatch({ type: "GRILL_ADD", orderId: o.id, patty: "beef" })}>Letak Patty Daging</button>
+        {beef > 1 && <button data-testid="grill-add-all-beef" className="rb-btn rb-red" disabled={!free} onClick={() => dispatch({ type: "GRILL_ADD_ALL", orderId: o.id, patty: "beef" })}>Letak Semua ({beef})</button>}
+        {veg > 0 && <button data-testid="grill-add-veg" className="rb-btn rb-green" disabled={!free} onClick={() => dispatch({ type: "GRILL_ADD", orderId: o.id, patty: "veg" })}>Letak Patty Sayur</button>}
+        {veg > 1 && <button data-testid="grill-add-all-veg" className="rb-btn rb-green" disabled={!free} onClick={() => dispatch({ type: "GRILL_ADD_ALL", orderId: o.id, patty: "veg" })}>Letak Semua Sayur ({veg})</button>}
       </div>
-      <div className="grid md:grid-cols-2 gap-4">{s.grill.map((g, i) => <Slot key={g ? g.id : `e${i}`} g={g} i={i} />)}</div>
+      <div className="flex items-center gap-2 flex-wrap mb-4 text-sm">
+        <span className="font-semibold">Masak patty simpanan (untuk pesanan akan datang):</span>
+        <button data-testid="grill-spare-beef" className="rb-btn rb-white text-sm" disabled={!free || s.stock.patty_beef <= 0} onClick={() => dispatch({ type: "GRILL_ADD", orderId: null, patty: "beef" })}>+ Daging (stok {s.stock.patty_beef})</button>
+        <button data-testid="grill-spare-veg" className="rb-btn rb-white text-sm" disabled={!free || s.stock.patty_veg <= 0} onClick={() => dispatch({ type: "GRILL_ADD", orderId: null, patty: "veg" })}>+ Sayur (stok {s.stock.patty_veg})</button>
+        <span className="text-xs text-[var(--muted)]">{free} slot kosong daripada {s.grill.length}</span>
+      </div>
+      <div className="grid md:grid-cols-2 2xl:grid-cols-4 gap-4">{s.grill.map((g, i) => <Slot key={g ? g.id : `e${i}`} g={g} i={i} />)}</div>
       <div className="mt-4" data-testid="patty-tray">
         <p className="rb-display font-extrabold">Dulang patty siap</p>
         <div className="flex gap-2 flex-wrap mt-1">
           {!s.pattyTray.length && <span className="text-sm text-[var(--muted)]">Kosong</span>}
-          {s.pattyTray.map((p) => <span key={p.id} className="text-xs font-semibold bg-white border-2 border-[var(--line)] rounded-full px-3 py-1">#{p.orderNum} · {p.type === "veg" ? "Sayur" : "Daging"} · kualiti {p.quality}</span>)}
+          {s.pattyTray.map((p) => <span key={p.id} className="text-xs font-semibold bg-white border-2 border-[var(--line)] rounded-full px-3 py-1">{p.orderNum ? `#${p.orderNum}` : "Simpanan"} · {p.type === "veg" ? "Sayur" : "Daging"} · kualiti {p.quality}</span>)}
         </div>
       </div>
     </div>

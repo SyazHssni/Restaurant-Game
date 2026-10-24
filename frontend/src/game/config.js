@@ -34,23 +34,112 @@ export const INGREDIENTS = {
 export const ASSEMBLY_ORDER = ["bun_bottom", "sauce_house", "patty_beef", "patty_veg", "cheese", "lettuce", "tomato", "pickle", "bun_top"];
 export const REMOVABLE = ["lettuce", "tomato", "pickle", "sauce_house"];
 
-export const BURGERS = {
-  classic: { name: "Classic Stack", price: 600, patty: "beef", pattyCount: 1, layers: ["bun_bottom", "sauce_house", "patty_beef", "lettuce", "tomato", "bun_top"] },
-  cheese: { name: "Cheese Stack", price: 670, patty: "beef", pattyCount: 1, layers: ["bun_bottom", "sauce_house", "patty_beef", "cheese", "lettuce", "tomato", "bun_top"] },
-  double: { name: "Double Stack", price: 850, patty: "beef", pattyCount: 2, layers: ["bun_bottom", "sauce_house", "patty_beef", "cheese", "patty_beef", "lettuce", "bun_top"] },
-  garden: { name: "Garden Stack", price: 650, patty: "veg", pattyCount: 1, layers: ["bun_bottom", "sauce_house", "patty_veg", "lettuce", "tomato", "pickle", "bun_top"] },
+const SPECIALS = {
+  classic: { name: "Classic Stack", price: 600, day: 1, layers: ["bun_bottom", "sauce_house", "patty_beef", "lettuce", "tomato", "bun_top"] },
+  cheese: { name: "Cheese Stack", price: 670, day: 2, layers: ["bun_bottom", "sauce_house", "patty_beef", "cheese", "lettuce", "tomato", "bun_top"] },
+  double: { name: "Double Stack", price: 850, day: 3, layers: ["bun_bottom", "sauce_house", "patty_beef", "cheese", "patty_beef", "lettuce", "bun_top"] },
+  garden: { name: "Garden Stack", price: 650, day: 5, layers: ["bun_bottom", "sauce_house", "patty_veg", "lettuce", "tomato", "pickle", "bun_top"] },
 };
+const FILLINGS = ["cheese", "lettuce", "tomato", "pickle"];
+const FILL_WORD = { cheese: "Keju", lettuce: "Salad", tomato: "Tomato", pickle: "Jeruk" };
+const PATTY_BASES = [
+  { key: "beef", word: "Daging", patties: ["patty_beef"], base: 480 },
+  { key: "double", word: "Daging Berganda", patties: ["patty_beef", "patty_beef"], base: 700 },
+  { key: "veg", word: "Sayur", patties: ["patty_veg"], base: 450 },
+  { key: "none", word: "", patties: [], base: 300 },
+];
+const PHRASES = {
+  "": "Asli", "lettuce+tomato": "Segar", "lettuce+tomato+pickle": "Kebun", "cheese+lettuce+tomato": "Keju Segar",
+  "cheese+lettuce+tomato+pickle": "Lengkap", "cheese+pickle": "Keju dan Jeruk", "lettuce+pickle": "Salad Rangup",
+};
+const joinWords = (w) => (w.length < 2 ? w.join("") : `${w.slice(0, -1).join(", ")} dan ${w[w.length - 1]}`);
+const comboKey = (layers) => [...layers].sort().join("+");
+
+function stackLayers(patties, fills, sauce) {
+  const l = ["bun_bottom"];
+  if (sauce) l.push("sauce_house");
+  if (patties[0]) l.push(patties[0]);
+  if (fills.includes("cheese")) l.push("cheese");
+  if (patties[1]) l.push(patties[1]);
+  ["lettuce", "tomato", "pickle"].forEach((f) => fills.includes(f) && l.push(f));
+  l.push("bun_top");
+  return l;
+}
+
+// Every distinct, sensible combination of the nine ingredients, with a unique name.
+function buildCatalogue() {
+  const out = {};
+  const seen = new Set();
+  Object.entries(SPECIALS).forEach(([id, b]) => { seen.add(comboKey(b.layers)); out[id] = { ...b, special: true }; });
+  const names = new Set(Object.values(out).map((b) => b.name));
+  for (const pb of PATTY_BASES) {
+    for (let mask = 0; mask < 16; mask++) {
+      const fills = FILLINGS.filter((_, i) => mask & (1 << i));
+      if (pb.key === "none" && (fills.length < 2 || !(fills.includes("lettuce") || fills.includes("tomato")))) continue;
+      for (const sauce of [true, false]) {
+        const layers = stackLayers(pb.patties, fills, sauce);
+        const key = comboKey(layers);
+        if (seen.has(key)) continue;
+        const phrase = PHRASES[fills.join("+")] || joinWords(fills.map((f) => FILL_WORD[f]));
+        const head = pb.word ? `Burger ${pb.word}` : "Burger";
+        let name = fills.length === 0 ? `${head} ${sauce ? "Istimewa" : "Asli"}`
+          : fills.length === 4 && !sauce ? `${head} Berlapis` : `${head} ${phrase}${sauce && fills.length < 4 ? " Istimewa" : ""}`;
+        if (names.has(name)) continue;
+        const veg = fills.filter((f) => f !== "cheese").length;
+        const price = pb.base + (fills.includes("cheese") ? 70 : 0) + veg * 30 + (sauce ? 20 : 0);
+        const day = pb.key === "beef" ? (fills.length <= 1 ? 1 : fills.length === 2 ? 2 : 3) : pb.key === "double" ? 3 : pb.key === "none" ? 4 : 5;
+        seen.add(key);
+        names.add(name);
+        out[`b_${pb.key}_${mask}_${sauce ? "s" : "n"}`] = { name, price, day, layers };
+      }
+    }
+  }
+  Object.values(out).forEach((b) => {
+    const patties = b.layers.filter((i) => i.startsWith("patty_"));
+    b.patty = patties[0] ? patties[0].slice(6) : null;
+    b.pattyCount = patties.length;
+  });
+  return out;
+}
+export const BURGERS = buildCatalogue();
+
 export const FRY_ITEMS = {
   fries: { name: "Kentang Goreng", sizes: { S: 200, M: 270, L: 350 }, cost: { S: 50, M: 70, L: 90 } },
   bites: { name: "Kepingan Ayam", sizes: { 4: 350, 6: 470 }, cost: { 4: 110, 6: 150 } },
 };
+export const TEMPS = { sejuk: "Sejuk", panas: "Panas", bilik: "Suhu Bilik" };
+const DRINK_TIERS = { W: { S: 100, M: 130, L: 160 }, A: { S: 150, M: 200, L: 250 }, B: { S: 180, M: 230, L: 280 }, C: { S: 250, M: 300, L: 350 }, D: { S: 300, M: 350, L: 400 } };
+const d = (name, group, tier, temps, day, color) => ({ name, group, tier, temps, day, color });
 export const DRINKS = {
-  cola: { name: "Kola", color: "#5a2d1c" },
-  lemon: { name: "Soda Lemon-Limau", color: "#c9e36b" },
-  orange: { name: "Soda Oren", color: "#f39a2b" },
-  water: { name: "Air Mineral", color: "#bfe3f2" },
+  cola: d("Kola", "Soda", "A", ["sejuk"], 1, "#5a2d1c"),
+  cola_zero: d("Kola Tanpa Gula", "Soda", "A", ["sejuk"], 2, "#3b2218"),
+  soda_oren: d("Soda Oren", "Soda", "A", ["sejuk"], 2, "#f39a2b"),
+  soda_anggur: d("Soda Anggur", "Soda", "A", ["sejuk"], 4, "#7b3f8c"),
+  air_mineral: d("Air Mineral", "Air", "W", ["sejuk", "bilik"], 1, "#bfe3f2"),
+  air_lemon: d("Air Lemon", "Air", "A", ["sejuk", "panas"], 4, "#e8e36b"),
+  jus_oren: d("Jus Oren", "Jus", "C", ["sejuk"], 3, "#f7a531"),
+  jus_epal: d("Jus Epal", "Jus", "C", ["sejuk"], 3, "#d9cf6a"),
+  jus_mangga: d("Jus Mangga", "Jus", "C", ["sejuk"], 5, "#f6b733"),
+  teh_o: d("Teh O", "Teh", "B", ["panas", "sejuk"], 1, "#9a4f1f"),
+  teh_o_limau: d("Teh O Limau", "Teh", "B", ["panas", "sejuk"], 3, "#b8742a"),
+  teh_tarik: d("Teh Tarik", "Teh", "B", ["panas", "sejuk"], 2, "#c98d5a"),
+  teh_lemon: d("Teh Lemon", "Teh", "B", ["panas", "sejuk"], 4, "#c9a23a"),
+  teh_hijau: d("Teh Hijau", "Teh", "B", ["panas", "sejuk"], 5, "#8fae3c"),
+  kopi_o: d("Kopi O", "Kopi", "B", ["panas", "sejuk"], 2, "#3a2216"),
+  kopi_susu: d("Kopi Susu", "Kopi", "B", ["panas", "sejuk"], 4, "#8a5a3a"),
+  latte: d("Latte", "Kopi", "D", ["panas", "sejuk"], 5, "#c7a27e"),
+  coklat_panas: d("Coklat Panas", "Coklat & Susu", "D", ["panas"], 4, "#6b3a22"),
+  coklat_ais: d("Coklat Ais", "Coklat & Susu", "D", ["sejuk"], 4, "#7a4a2e"),
+  susu_segar: d("Susu Segar", "Coklat & Susu", "C", ["sejuk", "panas"], 5, "#f4f1ea"),
+  sirap: d("Sirap", "Tradisional", "A", ["sejuk"], 1, "#e5466e"),
+  sirap_limau: d("Sirap Limau", "Tradisional", "A", ["sejuk"], 3, "#ef6a7a"),
+  bandung: d("Bandung", "Tradisional", "A", ["sejuk"], 3, "#f3a6bd"),
+  air_barli: d("Air Barli", "Tradisional", "A", ["panas", "sejuk"], 3, "#e9dcb0"),
+  air_jagung: d("Air Jagung", "Tradisional", "A", ["panas", "sejuk"], 4, "#f2d16b"),
+  air_kelapa: d("Air Kelapa", "Tradisional", "C", ["sejuk", "bilik"], 5, "#eef3e2"),
+  air_kosong: d("Air Kosong", "Air", "W", ["sejuk", "panas", "bilik"], 2, "#dceef6"),
 };
-export const DRINK_PRICES = { S: 150, M: 200, L: 250 };
+export const drinkPrice = (flavour, size) => DRINK_TIERS[DRINKS[flavour].tier][size];
 export const DRINK_COST = { S: 30, M: 40, L: 50 };
 export const SIZE_NAMES = { S: "Kecil", M: "Sederhana", L: "Besar", 4: "4 ketul", 6: "6 ketul" };
 
@@ -61,9 +150,9 @@ export const DISCOUNTS = [
 ];
 
 // Cooking timings (seconds)
+export const GRILL_SLOTS = 4;
 export const GRILL = { flipWin: [5, 8.5], burnA: 11, readyWin: [5, 8.5], burnB: 11.5 };
 export const FRYER = { win: [7, 10.5], burn: 14 };
-export const DRINK_FILL = { rate: 0.4, target: [0.85, 1.0], overflow: 1.2 };
 
 export const STAR_BANDS = [[90, 5], [80, 4], [65, 3], [45, 2], [0, 1]];
 
@@ -92,25 +181,28 @@ export const CUSTOMER_TYPES = [
 ];
 
 const BASE_DAYS = [
-  { customers: 6, interval: [30, 38], maxQueue: 3, maxActive: 3, target: 2000, maxLines: 2, maxQty: 2, discount: false, exclusions: false, noIce: false,
-    menu: { burgers: ["classic"], fries: ["S", "M"], bites: [], drinks: ["cola", "water"], sizes: ["S", "M"] } },
-  { customers: 7, interval: [27, 34], maxQueue: 3, maxActive: 3, target: 2800, maxLines: 2, maxQty: 2, discount: true, exclusions: true, noIce: true,
-    menu: { burgers: ["classic", "cheese"], fries: ["S", "M"], bites: [], drinks: ["cola", "lemon", "water"], sizes: ["S", "M"] } },
-  { customers: 8, interval: [25, 31], maxQueue: 4, maxActive: 4, target: 3500, maxLines: 3, maxQty: 2, discount: true, exclusions: true, noIce: true,
-    menu: { burgers: ["classic", "cheese", "double"], fries: ["S", "M", "L"], bites: [], drinks: ["cola", "lemon", "water"], sizes: ["S", "M", "L"] } },
-  { customers: 8, interval: [24, 30], maxQueue: 4, maxActive: 4, target: 4000, maxLines: 3, maxQty: 3, discount: true, exclusions: true, noIce: true,
-    menu: { burgers: ["classic", "cheese", "double"], fries: ["S", "M", "L"], bites: ["4", "6"], drinks: ["cola", "lemon", "orange", "water"], sizes: ["S", "M", "L"] } },
-  { customers: 9, interval: [22, 28], maxQueue: 4, maxActive: 4, target: 4600, maxLines: 3, maxQty: 3, discount: true, exclusions: true, noIce: true,
-    menu: { burgers: ["classic", "cheese", "double", "garden"], fries: ["S", "M", "L"], bites: ["4", "6"], drinks: ["cola", "lemon", "orange", "water"], sizes: ["S", "M", "L"] } },
+  { customers: 6, interval: [30, 38], maxQueue: 3, maxActive: 3, target: 2000, maxLines: 2, maxQty: 2, discount: false, exclusions: false,
+    menu: { fries: ["S", "M"], bites: [], sizes: ["S", "M"] } },
+  { customers: 7, interval: [27, 34], maxQueue: 3, maxActive: 3, target: 2800, maxLines: 2, maxQty: 2, discount: true, exclusions: true,
+    menu: { fries: ["S", "M"], bites: [], sizes: ["S", "M"] } },
+  { customers: 8, interval: [25, 31], maxQueue: 4, maxActive: 4, target: 3500, maxLines: 3, maxQty: 2, discount: true, exclusions: true,
+    menu: { fries: ["S", "M", "L"], bites: [], sizes: ["S", "M", "L"] } },
+  { customers: 8, interval: [24, 30], maxQueue: 4, maxActive: 4, target: 4000, maxLines: 3, maxQty: 3, discount: true, exclusions: true,
+    menu: { fries: ["S", "M", "L"], bites: ["4", "6"], sizes: ["S", "M", "L"] } },
+  { customers: 9, interval: [22, 28], maxQueue: 4, maxActive: 4, target: 4600, maxLines: 3, maxQty: 3, discount: true, exclusions: true,
+    menu: { fries: ["S", "M", "L"], bites: ["4", "6"], sizes: ["S", "M", "L"] } },
 ];
 
 export const UNLOCK_NOTES = {
-  1: "Menu: Classic Stack, kentang goreng, kola dan air mineral.",
-  2: "Baharu: Cheese Stack, Soda Lemon-Limau, permintaan khas dan diskaun kecil.",
-  3: "Baharu: Double Stack (2 patty) dan kentang goreng besar.",
-  4: "Baharu: Kepingan Ayam dan Soda Oren.",
-  5: "Baharu: Garden Stack dengan patty sayur.",
+  1: "Menu: Classic Stack, burger daging asas, kentang goreng, kola, air mineral, teh O dan sirap.",
+  2: "Baharu: Cheese Stack, lebih banyak burger daging, teh tarik, kopi O, soda dan diskaun kecil.",
+  3: "Baharu: Double Stack, burger daging berganda, jus dan minuman tradisional.",
+  4: "Baharu: burger tanpa patty, Kepingan Ayam, kopi susu dan coklat.",
+  5: "Baharu: Garden Stack, semua burger sayur, latte, jus mangga dan air kelapa.",
 };
+
+export const STARTING_STOCK = { bun_bottom: 30, sauce_house: 30, patty_beef: 24, patty_veg: 14, cheese: 18, lettuce: 20, tomato: 18, pickle: 10, bun_top: 30 };
+export const RESTOCK = { qty: 10, seconds: 15 };
 
 const TIMER_DIFF = { santai: { patience: 1.4, shift: 1.1 }, biasa: { patience: 1, shift: 1 }, sukar: { patience: 0.8, shift: 0.95 } };
 
@@ -118,8 +210,10 @@ export function dayConfig(day, settings) {
   const base = BASE_DAYS[Math.min(day, BASE_DAYS.length) - 1];
   const extra = Math.max(0, day - BASE_DAYS.length);
   const td = TIMER_DIFF[settings.timerDifficulty] || TIMER_DIFF.biasa;
+  const unlocked = (obj) => Object.keys(obj).filter((k) => obj[k].day <= day);
   return {
     ...base,
+    menu: { ...base.menu, burgers: unlocked(BURGERS), drinks: unlocked(DRINKS) },
     customers: base.customers + Math.min(extra, 6),
     interval: base.interval.map((v) => Math.max(16, v - extra)),
     target: base.target + extra * 400,

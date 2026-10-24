@@ -4,7 +4,7 @@ import MainMenu from "./screens/MainMenu";
 import ShiftScreen from "./screens/ShiftScreen";
 import SummaryScreen from "./screens/SummaryScreen";
 import SettingsScreen from "./screens/SettingsScreen";
-import { HowToPlay, Credits } from "./screens/InfoScreens";
+import { HowToPlay, Credits, MenuScreen } from "./screens/InfoScreens";
 import { loadSave, writeSave, newSave, loadSettings, writeSettings } from "./game/storage";
 import { buildSummary } from "./game/summary";
 import { UNLOCK_NOTES } from "./game/config";
@@ -58,6 +58,7 @@ function App() {
       {screen === "howto" && <HowToPlay onBack={back} onReplayTutorial={() => start(save && !save.bankrupt ? save : newSave(save), true)} />}
       {screen === "settings" && <SettingsScreen settings={settings} onChange={updateSettings} onBack={back} />}
       {screen === "credits" && <Credits onBack={back} />}
+      {screen === "menubook" && <MenuScreen onBack={back} />}
       {screen === "shift" && save && (
         <ShiftScreen key={run.key} save={save} settings={settings} tutorial={run.tutorial} onEnd={onEnd} onQuit={back} onTutorialDone={onTutorialDone} />
       )}

@@ -1,4 +1,4 @@
-import { STAR_BANDS, BURGERS, INGREDIENTS, GRILL, FRYER, DRINK_FILL } from "./config";
+import { STAR_BANDS, BURGERS, INGREDIENTS, GRILL, FRYER } from "./config";
 
 const clamp = (v) => Math.max(0, Math.min(100, Math.round(v)));
 
@@ -24,13 +24,6 @@ export function fryStatus(b) {
   if (b.t >= FRYER.burn) return { key: "burnt", label: "Hangus" };
   if (b.t >= FRYER.win[0]) return { key: "ready", label: b.t > FRYER.win[1] ? "Angkat segera!" : "Sedia" };
   return { key: "cooking", label: b.t < 3 ? "Baru dimasukkan" : "Sedang menggoreng" };
-}
-
-export function fillQuality(fill) {
-  const [lo, hi] = DRINK_FILL.target;
-  if (fill >= lo && fill <= hi) return 100;
-  if (fill < lo) return clamp(100 - (lo - fill) * 200);
-  return clamp(100 - (fill - hi) * 250);
 }
 
 export function requiredLayers(unit) {

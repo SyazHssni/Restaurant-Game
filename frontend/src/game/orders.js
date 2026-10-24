@@ -1,4 +1,4 @@
-import { BURGERS, FRY_ITEMS, DRINKS, DRINK_PRICES, SIZE_NAMES, INGREDIENTS, REMOVABLE, DISCOUNTS, CUSTOMER_TYPES } from "./config";
+import { BURGERS, FRY_ITEMS, DRINKS, drinkPrice, TEMPS, SIZE_NAMES, INGREDIENTS, REMOVABLE, DISCOUNTS, CUSTOMER_TYPES } from "./config";
 import { orderTotal, makeChange } from "./money";
 
 export function makeRng(seed) {
@@ -17,14 +17,13 @@ export function lineName(l) {
   if (l.kind === "burger") return BURGERS[l.productId].name;
   if (l.kind === "fries") return `${FRY_ITEMS.fries.name} ${SIZE_NAMES[l.size]}`;
   if (l.kind === "bites") return `${FRY_ITEMS.bites.name} ${SIZE_NAMES[l.size]}`;
-  return `${DRINKS[l.flavour].name} ${SIZE_NAMES[l.size]}`;
+  return `${DRINKS[l.flavour].name}, saiz ${SIZE_NAMES[l.size].toLowerCase()}, ${TEMPS[l.temp].toLowerCase()}`;
 }
 export function lineMods(l) {
   const m = l.exclude.map((i) => `Tanpa ${INGREDIENTS[i].name.toLowerCase()}`);
-  if (l.kind === "drink" && !l.ice) m.push("Tanpa ais");
   return m;
 }
-const lineKey = (l) => [l.kind, l.productId, l.size, l.flavour, l.ice, l.exclude.join("+")].join("|");
+const lineKey = (l) => [l.kind, l.productId, l.size, l.flavour, l.temp, l.exclude.join("+")].join("|");
 
 export function orderSpeech(lines) {
   const parts = lines.map((l) => {
@@ -36,13 +35,15 @@ export function orderSpeech(lines) {
 }
 
 function buildLine(rng, kind, cfg, type, allowMods) {
-  const base = { kind, exclude: [], ice: true, qty: 1 };
+  const base = { kind, exclude: [], qty: 1 };
   if (kind === "burger") {
-    const pool = type.explorer ? cfg.menu.burgers.slice(-2) : cfg.menu.burgers;
+    const newest = Math.max(...cfg.menu.burgers.map((b) => BURGERS[b].day));
+    const fresh = cfg.menu.burgers.filter((b) => BURGERS[b].day === newest);
+    const pool = type.explorer && fresh.length ? fresh : cfg.menu.burgers;
     const productId = pick(rng, pool);
     const ex = [];
-    if (allowMods && (type.picky || rng() < 0.22)) {
-      const opts = REMOVABLE.filter((i) => BURGERS[productId].layers.includes(i));
+    const opts = REMOVABLE.filter((i) => BURGERS[productId].layers.includes(i));
+    if (allowMods && opts.length > 1 && (type.picky || rng() < 0.15)) {
       ex.push(pick(rng, opts));
     }
     return { ...base, productId, exclude: ex, unit: BURGERS[productId].price };
@@ -53,8 +54,8 @@ function buildLine(rng, kind, cfg, type, allowMods) {
   }
   const size = pick(rng, cfg.menu.sizes);
   const flavour = pick(rng, cfg.menu.drinks);
-  const ice = flavour === "water" ? true : !(cfg.noIce && allowMods && (type.picky || rng() < 0.2));
-  return { ...base, productId: "drink", size, flavour, ice, unit: DRINK_PRICES[size] };
+  const temp = pick(rng, DRINKS[flavour].temps);
+  return { ...base, productId: "drink", size, flavour, temp, unit: drinkPrice(flavour, size) };
 }
 
 export function pickCustomerType(rng, recentTypes) {
@@ -68,10 +69,11 @@ export function generateLines(rng, cfg, mode, type) {
   let nLines = type.simple ? 1 + Math.floor(rng() * 2) : 1 + Math.floor(rng() * maxLines);
   if (type.family) nLines = Math.max(2, Math.min(maxLines + 1, nLines + 1));
   nLines = Math.max(1, Math.min(nLines, 4));
-  const cats = ["burger", "fries", "drink"];
+  const cats = ["fries", "drink"];
+  if (cfg.menu.burgers.length) cats.push("burger");
   if (cfg.menu.bites.length) cats.push("bites");
   const order = [...cats].sort(() => rng() - 0.5);
-  if (!order.slice(0, nLines).includes("burger") && rng() < 0.7) order.unshift("burger");
+  if (cfg.menu.burgers.length && !order.slice(0, nLines).includes("burger") && rng() < 0.7) order.unshift("burger");
   const kinds = [];
   for (let i = 0; i < nLines; i++) kinds.push(order[i % order.length]);
   const lines = [];
@@ -137,7 +139,7 @@ export function expandUnits(lines) {
   const units = [];
   lines.forEach((l) => {
     for (let k = 0; k < l.qty; k++) {
-      units.push({ uid: `${l.lid}-${k + 1}`, lid: l.lid, kind: l.kind, productId: l.productId, size: l.size, flavour: l.flavour, ice: l.ice, exclude: l.exclude, state: "todo", accuracy: null, quality: null, busy: false });
+      units.push({ uid: `${l.lid}-${k + 1}`, lid: l.lid, kind: l.kind, productId: l.productId, size: l.size, flavour: l.flavour, temp: l.temp, exclude: l.exclude, state: "todo", accuracy: null, quality: null, busy: false });
     }
   });
   return units;
@@ -154,9 +156,9 @@ export function buildOrderDraft(rng, cfg, mode, type, drawer) {
 
 export const TUTORIAL_DRAFT = {
   lines: [
-    { lid: "L1", kind: "burger", productId: "classic", exclude: [], ice: true, qty: 1, unit: 600 },
-    { lid: "L2", kind: "fries", productId: "fries", size: "S", exclude: [], ice: true, qty: 1, unit: 200 },
-    { lid: "L3", kind: "drink", productId: "drink", size: "S", flavour: "cola", exclude: [], ice: true, qty: 1, unit: 150 },
+    { lid: "L1", kind: "burger", productId: "classic", exclude: [], qty: 1, unit: 600 },
+    { lid: "L2", kind: "fries", productId: "fries", size: "S", exclude: [], qty: 1, unit: 200 },
+    { lid: "L3", kind: "drink", productId: "drink", size: "S", flavour: "cola", temp: "sejuk", exclude: [], qty: 1, unit: 150 },
   ],
   discount: null,
   total: 950,

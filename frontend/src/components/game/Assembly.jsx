@@ -23,13 +23,15 @@ const Board = () => {
         <div className="grid grid-cols-3 gap-2">
           {ASSEMBLY_ORDER.map((ing) => {
             const pt = INGREDIENTS[ing].patty;
-            const avail = pt ? s.pattyTray.filter((p) => p.orderId === o.id && p.type === pt).length : null;
+            const avail = pt ? s.pattyTray.filter((p) => (p.orderId === o.id || p.orderId === null) && p.type === pt).length : null;
+            const out = !pt && s.stock[ing] <= 0;
             return (
-              <button key={ing} data-testid={`asm-add-${ing}`} disabled={pt && !avail} onClick={() => act("ASM_ADD", { ing })}
+              <button key={ing} data-testid={`asm-add-${ing}`} disabled={(pt && !avail) || out} onClick={() => act("ASM_ADD", { ing })}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-[var(--line)] bg-white hover:border-[var(--mustard-dark)] hover:bg-[#fff1cf] disabled:opacity-40 transition-colors">
                 <span className="w-10 h-4 rounded-md border border-black/40" style={{ background: INGREDIENTS[ing].color }} />
                 <span className="text-xs font-semibold text-center leading-tight">{INGREDIENTS[ing].name}</span>
-                {pt && <span className="text-[10px] text-[var(--muted)]">Siap: {avail}</span>}
+                {pt ? <span className="text-[10px] text-[var(--muted)]">Siap: {avail}</span>
+                  : <span className={`text-[10px] ${out ? "text-[var(--tomato)] font-bold" : "text-[var(--muted)]"}`} data-testid={`asm-stock-${ing}`}>{out ? "Stok habis" : `Stok: ${s.stock[ing]}`}</span>}
               </button>
             );
           })}

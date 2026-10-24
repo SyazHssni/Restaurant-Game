@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Play, RotateCcw, BookOpen, Settings, Award, AlertTriangle } from "lucide-react";
+import { Play, RotateCcw, BookOpen, Settings, Award, AlertTriangle, Utensils } from "lucide-react";
 import { BurgerStack, Money } from "../components/game/Art";
 import { formatRM } from "../game/money";
 import {
@@ -35,6 +35,7 @@ export default function MainMenu({ save, onNew, onContinue, onRestartBusiness, g
           <button data-testid="menu-continue" className="rb-btn rb-yellow text-xl py-3 flex items-center justify-center gap-2" disabled={!hasSave || save.bankrupt} onClick={onContinue}>
             <RotateCcw size={20} />Teruskan{hasSave && !save.bankrupt ? ` — Hari ${save.day}` : ""}
           </button>
+          <button data-testid="menu-burger-book" className="rb-btn rb-white text-base py-2 flex items-center justify-center gap-2" onClick={() => go("menubook")}><Utensils size={18} />Menu Burger</button>
           <div className="grid grid-cols-3 gap-2">
             <button data-testid="menu-how-to-play" className="rb-btn rb-white text-sm flex flex-col items-center gap-1 py-2 rounded-2xl" onClick={() => go("howto")}><BookOpen size={18} />Cara Bermain</button>
             <button data-testid="menu-settings" className="rb-btn rb-white text-sm flex flex-col items-center gap-1 py-2 rounded-2xl" onClick={() => go("settings")}><Settings size={18} />Tetapan</button>

@@ -1,7 +1,10 @@
-import { Pause, AlertTriangle, Star, Clock } from "lucide-react";
+import { useCallback } from "react";
+import { Pause, AlertTriangle, Star, Clock, BookOpen } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import { MenuList, StockPanel } from "./MenuBook";
 import { useGame } from "./shared";
 import { formatRM } from "../../game/money";
-import { shiftNet, mathScore, businessAtRisk } from "../../game/engine";
+import { shiftNet, mathScore, businessAtRisk, missingStock } from "../../game/engine";
 
 const MODE = { challenge: "Mod Cabaran", mental: "Mod Matematik Mental", guided: "Mod Berpandu" };
 const mmss = (t) => `${Math.floor(t / 60)}:${String(Math.floor(t % 60)).padStart(2, "0")}`;
@@ -12,6 +15,24 @@ const Stat = ({ label, value, testId, tone }) => (
     <span data-testid={testId} className={`rb-display text-xl font-bold tabular ${tone || ""}`}>{value}</span>
   </div>
 );
+
+const MenuDialog = () => {
+  const { state: s, dispatch } = useGame();
+  const missingFn = useCallback((id) => missingStock(s, id), [s]);
+  const open = !!s.menuOpen;
+  return (
+    <Dialog open={open} onOpenChange={(v) => dispatch({ type: v ? "OPEN_MENU" : "CLOSE_MENU" })}>
+      <DialogContent className="max-w-6xl max-h-[88vh] overflow-y-auto rb-scroll bg-[var(--cream)]" data-testid="menu-dialog">
+        <DialogHeader>
+          <DialogTitle className="rb-display text-3xl">Buku Menu & Stok Bahan</DialogTitle>
+          <DialogDescription>Menu yang memerlukan bahan berstok sifar tidak akan dipesan oleh pelanggan sehingga stok dikemas kini. Permainan dijeda semasa buku menu dibuka.</DialogDescription>
+        </DialogHeader>
+        <StockPanel stock={s.stock} deliveries={s.deliveries} onRestock={(ing) => dispatch({ type: "RESTOCK", ing })} />
+        <MenuList day={s.day} stock={s.stock} missingFn={missingFn} />
+      </DialogContent>
+    </Dialog>
+  );
+};
 
 export const StatusBar = () => {
   const { state: s, dispatch } = useGame();
@@ -47,6 +68,10 @@ export const StatusBar = () => {
               <AlertTriangle size={16} /> Perniagaan berisiko
             </span>
           )}
+          <button data-testid="menu-book-button" className="rb-btn rb-yellow flex items-center gap-1" onClick={() => dispatch({ type: "OPEN_MENU" })}>
+            <BookOpen size={16} /> Buku Menu
+          </button>
+          <MenuDialog />
           <button data-testid="pause-button" className="rb-btn rb-white flex items-center gap-1" onClick={() => dispatch({ type: "PAUSE" })}>
             <Pause size={16} /> Jeda
           </button>

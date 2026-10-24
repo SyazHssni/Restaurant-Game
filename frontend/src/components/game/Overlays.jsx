@@ -33,7 +33,7 @@ const TONE = { good: "bg-[#e5f4dc] border-[var(--lettuce)]", bad: "bg-[#fde3dc] 
 export const FxToasts = () => {
   const { state: s } = useGame();
   return (
-    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-40 flex flex-col-reverse gap-2 items-center pointer-events-none" aria-live="polite" data-testid="fx-toasts">
+    <div className="fixed top-20 right-4 z-40 flex flex-col gap-2 items-end max-w-[520px] pointer-events-none" aria-live="polite" data-testid="fx-toasts">
       {s.fx.map((f) => <div key={f.id} className={`rb-pop rounded-full border-2 px-4 py-2 text-sm font-semibold shadow-md ${TONE[f.tone]}`}>{f.text}</div>)}
     </div>
   );
@@ -41,7 +41,7 @@ export const FxToasts = () => {
 
 export const PauseMenu = ({ onQuit, onRestart }) => {
   const { state: s, dispatch } = useGame();
-  if (!s.paused) return null;
+  if (!s.paused || s.menuOpen) return null;
   return (
     <div className="fixed inset-0 z-50 bg-[rgba(43,42,40,0.6)] backdrop-blur-sm flex items-center justify-center" data-testid="pause-menu">
       <div className="rb-card p-8 w-[360px] text-center space-y-3 rb-pop">

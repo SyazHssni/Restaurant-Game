@@ -1,16 +1,16 @@
-import { OPENING_FLOAT, INGREDIENTS, BURGERS, FRY_ITEMS, DRINK_COST, GRILL, FRYER, DRINK_FILL, GRACE_SECONDS, COMPLAINT_PENALTY, CUSTOMER_TYPES, dayConfig } from "./config";
+import { OPENING_FLOAT, INGREDIENTS, BURGERS, FRY_ITEMS, DRINKS, DRINK_COST, TEMPS, SIZE_NAMES, GRILL_SLOTS, STARTING_STOCK, RESTOCK, GRILL, FRYER, GRACE_SECONDS, COMPLAINT_PENALTY, CUSTOMER_TYPES, dayConfig } from "./config";
 import { makeRng, pickCustomerType, buildOrderDraft, expandUnits, TUTORIAL_DRAFT, lineName } from "./orders";
 import { parseRM, sumDenoms, makeChange, formatRM, lineTotal } from "./money";
-import { windowQuality, grillStatus, fryStatus, fillQuality, burgerCheck, scoreOrder, tipFor } from "./scoring";
+import { windowQuality, grillStatus, fryStatus, burgerCheck, scoreOrder, tipFor } from "./scoring";
 
 export const TUTORIAL_STEPS = [
   { station: "counter", title: "Pelanggan pertama", text: "Pak Hamid sedang menunggu di kaunter. Klik kad pelanggan di barisan atas, kemudian tekan butang 'Ambil Pesanan'." },
   { station: "register", title: "Kira jumlah bil", text: "Lihat resit: darab harga seunit dengan kuantiti bagi setiap baris. RM6.00 × 1, RM2.00 × 1 dan RM1.50 × 1. Tambah semua jawapan, taip jumlahnya pada pad nombor dan tekan Sahkan." },
   { station: "register", title: "Kira dan beri baki", text: "Baki = wang yang dibayar − jumlah bil. Pak Hamid bayar RM10.00. Tolak jumlah bil daripada RM10.00, kemudian pilih syiling atau not yang betul dan tekan 'Beri Baki'." },
-  { station: "grill", title: "Masak patty", text: "Pergi ke Gril (kekunci 3). Tekan 'Letak Patty Daging'. Bila tertera 'Terbalikkan sekarang!', tekan Terbalikkan. Bila tertera 'Sedia', tekan Angkat." },
+  { station: "grill", title: "Masak patty", text: "Pergi ke Gril (kekunci 3). Tekan 'Letak Patty Daging' (anda boleh memasak sehingga 4 patty serentak). Bila tertera 'Terbalikkan sekarang!', tekan Terbalikkan. Bila tertera 'Sedia', tekan Angkat." },
   { station: "assembly", title: "Pasang burger", text: "Pergi ke Pemasangan (kekunci 5). Pilih burger, kemudian tambah lapisan ikut senarai semak: roti bawah dahulu dan roti atas terakhir. Tekan 'Siap'." },
   { station: "fryer", title: "Goreng kentang", text: "Pergi ke Penggoreng (kekunci 4). Tekan Goreng pada kentang goreng. Angkat bila tertera 'Sedia' — jangan biar hangus!" },
-  { station: "drinks", title: "Sediakan minuman", text: "Pergi ke Minuman (kekunci 6). Pilih kola, semak saiz dan ais, tekan 'Isi Cawan' dan 'Berhenti' bila air berada dalam jalur hijau." },
+  { station: "drinks", title: "Sediakan minuman", text: "Pergi ke Minuman (kekunci 6). Baca pesanan: Kola, saiz kecil, sejuk × 1. Pilih jenis minuman, saiz cawan dan suhu yang sama, tekan 'Sediakan', kemudian 'Sahkan Penyediaan'." },
   { station: "packing", title: "Bungkus dan hidang", text: "Pergi ke Pembungkusan (kekunci 7). Masukkan setiap item ke dalam beg, semak senarai, kemudian tekan 'Hantar Pesanan'." },
   { station: null, title: "Hebat! Anda bersedia.", text: "Syif sebenar bermula sekarang mengikut tahap matematik dalam Tetapan. Pelanggan akan datang dan masa akan berjalan. Selamat berniaga!" },
 ];
@@ -49,11 +49,12 @@ export function createShift(save, settings, withTutorial) {
     ended: false, paused: false, tutorial: withTutorial ? { step: 0 } : null,
     nextSpawnAt: withTutorial ? Infinity : 2, spawned: 0, queue: [], orders: [], orderSeq: 101, idSeq: 1,
     seed: Number(new URLSearchParams(window.location.search).get("seed")) || Date.now() % 2147483647,
-    drawer: { ...OPENING_FLOAT }, grill: [null, null], fryer: [null, null], pattyTray: [], assembly: null, drink: null,
+    drawer: { ...OPENING_FLOAT }, grill: Array(GRILL_SLOTS).fill(null), fryer: [null, null], pattyTray: [], assembly: null, drinkTray: null,
+    stock: { ...STARTING_STOCK }, deliveries: [],
     ledger: { sales: 0, ingredients: 0, tips: 0, refunds: 0, shortages: 0, penalties: 0, bonus: 0, underReturned: 0 },
     stats: newStats(), startFunds: save.funds, startRep: save.reputation, reputation: save.reputation,
     station: "counter", selectedCustomerId: null, selectedOrderId: null, recentTypes: [], fx: [], sfx: [], fxSeq: 1,
-    workedExample: null, packWarn: null, lastPayment: null,
+    workedExample: null, packWarn: null, lastPayment: null, drinkFeedback: null,
   };
   if (withTutorial) {
     const type = CUSTOMER_TYPES[0];
@@ -90,6 +91,16 @@ export const mathScore = (st) => {
 };
 export const businessAtRisk = (s) => s.stats.changeWrong >= 3 || s.reputation < 30 || s.startFunds + shiftNet(s.ledger) < 5000;
 
+// Ingredients a burger needs that the current stock cannot cover.
+export function missingStock(s, burgerId) {
+  const need = {};
+  BURGERS[burgerId].layers.forEach((i) => { need[i] = (need[i] || 0) + 1; });
+  return Object.keys(need).filter((i) => {
+    const spare = INGREDIENTS[i].patty ? s.pattyTray.filter((p) => p.type === INGREDIENTS[i].patty).length : 0;
+    return s.stock[i] + spare < need[i];
+  });
+}
+
 export function pattiesNeeded(s, o, type) {
   const need = o.units.filter((u) => u.kind === "burger" && u.state === "todo" && BURGERS[u.productId].patty === type)
     .reduce((a, u) => a + BURGERS[u.productId].pattyCount, 0);
@@ -100,11 +111,11 @@ export function pattiesNeeded(s, o, type) {
 }
 
 function cleanupOrder(s, o) {
-  s.grill = s.grill.map((g) => (g && g.orderId === o.id ? null : g));
+  s.grill.forEach((g) => { if (g && g.orderId === o.id) { g.orderId = null; g.orderNum = null; } });
   s.fryer = s.fryer.map((b) => (b && b.orderId === o.id ? null : b));
-  s.pattyTray = s.pattyTray.filter((p) => p.orderId !== o.id);
+  s.pattyTray.forEach((p) => { if (p.orderId === o.id) { p.orderId = null; p.orderNum = null; } });
   if (s.assembly && s.assembly.orderId === o.id) s.assembly = null;
-  if (s.drink && s.drink.orderId === o.id) s.drink = null;
+  if (s.drinkTray && s.drinkTray.orderId === o.id) s.drinkTray = null;
   if (s.packWarn === o.id) s.packWarn = null;
 }
 
@@ -134,31 +145,15 @@ function endShift(s) {
   sfx(s, "end");
 }
 
-function stopDrink(s) {
-  const d = s.drink;
-  const o = getOrder(s, d.orderId);
-  const u = o.units.find((x) => x.uid === d.uid);
-  const mism = (d.size !== u.size) + (d.flavour !== u.flavour) + (d.ice !== u.ice);
-  u.accuracy = Math.max(0, 100 - mism * 35);
-  u.quality = fillQuality(d.fill);
-  u.state = "ready";
-  u.busy = false;
-  s.drink = null;
-  if (d.fill > DRINK_FILL.target[1]) fx(s, "Cawan terlebih isi sedikit — tidak mengapa, cuba berhenti lebih awal.", "warn");
-  else if (d.fill < DRINK_FILL.target[0]) fx(s, "Cawan kurang penuh.", "warn");
-  else fx(s, "Minuman siap — isian sempurna!", "good");
-  if (mism) fx(s, "Minuman tidak sama dengan tiket. Semak saiz, perisa dan ais.", "warn");
-  sfx(s, "pop");
-}
-
 function tick(s, dt) {
   s.clock += dt;
   s.grill.forEach((g) => { if (g) { if (g.flipped) g.sideB += dt; else g.sideA += dt; } });
   s.fryer.forEach((b) => { if (b) b.t += dt; });
-  if (s.drink && s.drink.filling) {
-    s.drink.fill += DRINK_FILL.rate * dt;
-    if (s.drink.fill >= DRINK_FILL.overflow) stopDrink(s);
-  }
+  s.deliveries.filter((d) => d.at <= s.clock).forEach((d) => {
+    s.stock[d.ing] += d.qty;
+    fx(s, `Stok ${INGREDIENTS[d.ing].name} dikemas kini (+${d.qty}).`, "good");
+  });
+  s.deliveries = s.deliveries.filter((d) => d.at > s.clock);
   if (!s.tutorial) {
     if (!s.grace) {
       s.timeLeft -= dt;
@@ -207,7 +202,8 @@ function takeOrder(s, customerId) {
   if (!c) return;
   if (activeOrders(s).length >= s.cfg.maxActive) { fx(s, "Rel tiket penuh. Siapkan pesanan lain dahulu.", "warn"); return; }
   const type = CUSTOMER_TYPES.find((t) => t.id === c.typeId);
-  const draft = c.tutorial ? TUTORIAL_DRAFT : buildOrderDraft(rngFn(s), s.cfg, s.mode, type, s.drawer);
+  const cfg = { ...s.cfg, menu: { ...s.cfg.menu, burgers: s.cfg.menu.burgers.filter((id) => !missingStock(s, id).length) } };
+  const draft = c.tutorial ? TUTORIAL_DRAFT : buildOrderDraft(rngFn(s), cfg, s.mode, type, s.drawer);
   const units = expandUnits(draft.lines);
   const max = Math.round((75 + units.length * 20) * type.patience * s.cfg.patienceMod);
   const o = {
@@ -318,16 +314,27 @@ function commitPayment(s, o) {
   fx(s, p.result.ok ? `Pesanan #${o.num} dibayar. Mulakan memasak!` : `Pesanan #${o.num}: semak semula kiraan baki untuk pelanggan seterusnya.`, p.result.ok ? "good" : "bad");
 }
 
+function putPatty(s, o, type) {
+  const i = s.grill.findIndex((g) => !g);
+  if (i < 0) { fx(s, "Semua slot gril sedang digunakan.", "warn"); return false; }
+  const ing = `patty_${type}`;
+  if (s.stock[ing] <= 0) { fx(s, `Stok ${INGREDIENTS[ing].name} habis. Pesan stok di Buku Menu.`, "warn"); return false; }
+  s.stock[ing] -= 1;
+  s.grill[i] = { id: `G${s.idSeq++}`, orderId: o ? o.id : null, orderNum: o ? o.num : null, type, sideA: 0, sideB: 0, flipped: false, flipQ: null };
+  if (o) cost(s, o, INGREDIENTS[ing].cost);
+  else s.ledger.ingredients += INGREDIENTS[ing].cost;
+  sfx(s, "sizzle");
+  return true;
+}
+
 function grill(s, a) {
-  if (a.type === "GRILL_ADD") {
+  if (a.type === "GRILL_ADD" || a.type === "GRILL_ADD_ALL") {
+    if (!a.orderId) { putPatty(s, null, a.patty); return; }
     const o = getOrder(s, a.orderId);
     if (!o || o.status !== "paid") return;
     if (pattiesNeeded(s, o, a.patty) <= 0) { fx(s, "Tiket ini sudah cukup patty.", "warn"); return; }
-    const i = s.grill.findIndex((g) => !g);
-    if (i < 0) { fx(s, "Semua slot gril sedang digunakan.", "warn"); return; }
-    s.grill[i] = { id: `G${s.idSeq++}`, orderId: o.id, orderNum: o.num, type: a.patty, sideA: 0, sideB: 0, flipped: false, flipQ: null };
-    cost(s, o, INGREDIENTS[`patty_${a.patty}`].cost);
-    sfx(s, "sizzle");
+    if (a.type === "GRILL_ADD") putPatty(s, o, a.patty);
+    else while (pattiesNeeded(s, o, a.patty) > 0 && putPatty(s, o, a.patty));
     return;
   }
   const g = s.grill[a.index];
@@ -342,7 +349,7 @@ function grill(s, a) {
     const q = Math.round((g.flipQ + windowQuality(g.sideB, ...GRILL.readyWin, GRILL.burnB)) / 2);
     s.pattyTray.push({ id: g.id, orderId: g.orderId, orderNum: g.orderNum, type: g.type, quality: q });
     s.grill[a.index] = null;
-    fx(s, `Patty untuk #${g.orderNum} siap (kualiti ${q}). Bawa ke Pemasangan.`, "good");
+    fx(s, g.orderNum ? `Patty untuk #${g.orderNum} siap (kualiti ${q}). Bawa ke Pemasangan.` : `Patty simpanan siap (kualiti ${q}).`, "good");
     sfx(s, "pop");
   } else if (a.type === "GRILL_DISCARD") {
     s.grill[a.index] = null;
@@ -392,19 +399,28 @@ function assembly(s, a) {
   if (!asm) return;
   const o = getOrder(s, asm.orderId);
   const u = o.units.find((x) => x.uid === asm.uid);
-  const returnPatties = () => asm.layers.filter((l) => l.q != null).forEach((l) => s.pattyTray.push({ id: `P${s.idSeq++}`, orderId: o.id, orderNum: o.num, type: INGREDIENTS[l.ing].patty, quality: l.q }));
+  const returnPatties = () => asm.layers.forEach((l) => {
+    if (l.q == null) s.stock[l.ing] += 1;
+    else s.pattyTray.push({ id: `P${s.idSeq++}`, orderId: o.id, orderNum: o.num, type: INGREDIENTS[l.ing].patty, quality: l.q });
+  });
   if (a.type === "ASM_ADD") {
     if (asm.layers.length >= 12) return;
     const pt = INGREDIENTS[a.ing].patty;
     if (pt) {
-      const i = s.pattyTray.findIndex((p) => p.orderId === o.id && p.type === pt);
+      let i = s.pattyTray.findIndex((p) => p.orderId === o.id && p.type === pt);
+      if (i < 0) i = s.pattyTray.findIndex((p) => p.orderId === null && p.type === pt);
       if (i < 0) { fx(s, `Tiada ${INGREDIENTS[a.ing].name.toLowerCase()} yang dimasak untuk #${o.num}. Masak di Gril dahulu.`, "warn"); return; }
       asm.layers.push({ ing: a.ing, q: s.pattyTray[i].quality });
       s.pattyTray.splice(i, 1);
-    } else asm.layers.push({ ing: a.ing });
+    } else {
+      if (s.stock[a.ing] <= 0) { fx(s, `Stok ${INGREDIENTS[a.ing].name} habis. Pesan stok di Buku Menu.`, "warn"); return; }
+      s.stock[a.ing] -= 1;
+      asm.layers.push({ ing: a.ing });
+    }
     sfx(s, "tap");
   } else if (a.type === "ASM_UNDO") {
     const l = asm.layers.pop();
+    if (l && l.q == null) s.stock[l.ing] += 1;
     if (l && l.q != null) s.pattyTray.push({ id: `P${s.idSeq++}`, orderId: o.id, orderNum: o.num, type: INGREDIENTS[l.ing].patty, quality: l.q });
   } else if (a.type === "ASM_RESET") {
     returnPatties();
@@ -432,28 +448,76 @@ function assembly(s, a) {
   }
 }
 
+export const drinkLabel = (c) => `${DRINKS[c.flavour].name}, saiz ${SIZE_NAMES[c.size].toLowerCase()}, ${TEMPS[c.temp].toLowerCase()}`;
+
+function confirmDrinks(s) {
+  const t = s.drinkTray;
+  const o = getOrder(s, t.orderId);
+  const todo = o.units.filter((u) => u.kind === "drink" && u.state === "todo");
+  const wrong = [];
+  t.cups.forEach((c) => {
+    const i = todo.findIndex((u) => u.flavour === c.flavour && u.size === c.size && u.temp === c.temp);
+    if (i >= 0) {
+      Object.assign(todo[i], { state: "ready", accuracy: 100, quality: 100, busy: false });
+      todo.splice(i, 1);
+    } else wrong.push(c);
+  });
+  const issues = {};
+  wrong.forEach((c) => {
+    if (!todo.length) { (issues._extra = issues._extra || []).push(`${drinkLabel(c)} tidak dipesan — dibuang.`); return; }
+    const score = (u) => (u.flavour === c.flavour) * 2 + (u.size === c.size) + (u.temp === c.temp);
+    const u = todo.reduce((x, y) => (score(y) > score(x) ? y : x));
+    const errs = [];
+    if (u.flavour !== c.flavour) errs.push(`jenis ${DRINKS[c.flavour].name} (sepatutnya ${DRINKS[u.flavour].name})`);
+    if (u.size !== c.size) errs.push(`saiz ${SIZE_NAMES[c.size]} (sepatutnya ${SIZE_NAMES[u.size]})`);
+    if (u.temp !== c.temp) errs.push(`suhu ${TEMPS[c.temp]} (sepatutnya ${TEMPS[u.temp]})`);
+    (issues[u.lid] = issues[u.lid] || []).push(`Salah ${errs.join(", ")}.`);
+  });
+  o.drinkIssues = {};
+  const msgs = [];
+  o.lines.filter((l) => l.kind === "drink").forEach((l) => {
+    const units = o.units.filter((u) => u.lid === l.lid);
+    const done = units.filter((u) => u.state !== "todo").length;
+    if (issues[l.lid]) { o.drinkIssues[l.lid] = issues[l.lid]; msgs.push(`${drinkLabel(l)}: ${issues[l.lid].join(" ")} Perlu dibetulkan (${done}/${l.qty}).`); }
+    else if (done < l.qty) msgs.push(`${drinkLabel(l)}: belum lengkap — ${done}/${l.qty} disediakan.`);
+  });
+  if (issues._extra) msgs.push(...issues._extra);
+  const ok = o.units.filter((u) => u.kind === "drink").every((u) => u.state !== "todo") && !wrong.length;
+  s.drinkFeedback = { orderId: o.id, ok, msgs: ok ? ["Semua minuman sepadan dengan pesanan. Siap!"] : msgs };
+  s.drinkTray = null;
+  fx(s, ok ? `Minuman #${o.num} siap dan betul!` : `Minuman #${o.num}: semak status penyediaan.`, ok ? "good" : "warn");
+  sfx(s, ok ? "ok" : "err");
+}
+
 function drinks(s, a) {
-  if (a.type === "DRINK_START") {
-    if (s.drink) return;
+  const t = s.drinkTray;
+  if (a.type === "DRINK_PREPARE") {
     const o = getOrder(s, a.orderId);
-    const u = o && o.status === "paid" && o.units.find((x) => x.uid === a.uid);
-    if (!u || u.state !== "todo" || u.busy) return;
-    u.busy = true;
-    s.drink = { orderId: o.id, orderNum: o.num, uid: u.uid, size: u.size, flavour: u.flavour, ice: u.ice, fill: 0, filling: false };
-    return;
-  }
-  const d = s.drink;
-  if (!d) return;
-  if (a.type === "DRINK_SET" && !d.filling && d.fill === 0) d[a.field] = a.value;
-  else if (a.type === "DRINK_FILL" && !d.filling && d.fill === 0) {
-    d.filling = true;
-    cost(s, getOrder(s, d.orderId), DRINK_COST[d.size]);
+    if (!o || o.status !== "paid" || !o.units.some((u) => u.kind === "drink" && u.state === "todo")) return;
+    if (!a.flavour || !a.size || !a.temp) { fx(s, "Pilih jenis minuman, saiz cawan dan suhu dahulu.", "warn"); return; }
+    if (!DRINKS[a.flavour].temps.includes(a.temp)) { fx(s, `${DRINKS[a.flavour].name} tidak boleh disediakan ${TEMPS[a.temp].toLowerCase()}.`, "warn"); return; }
+    if (t && t.orderId !== o.id && t.cups.length) { fx(s, `Sahkan atau kosongkan dulang minuman #${t.orderNum} dahulu.`, "warn"); return; }
+    const tray = t && t.orderId === o.id ? t : { orderId: o.id, orderNum: o.num, cups: [] };
+    const qty = Math.max(1, Math.min(a.qty || 1, 8 - tray.cups.length));
+    if (tray.cups.length >= 8) { fx(s, "Dulang minuman penuh (8 cawan).", "warn"); return; }
+    for (let k = 0; k < qty; k++) {
+      tray.cups.push({ id: `D${s.idSeq++}`, flavour: a.flavour, size: a.size, temp: a.temp });
+      cost(s, o, DRINK_COST[a.size]);
+    }
+    s.drinkTray = tray;
+    if (s.drinkFeedback && s.drinkFeedback.orderId === o.id) s.drinkFeedback = null;
     sfx(s, "pour");
-  } else if (a.type === "DRINK_STOP" && d.filling) stopDrink(s);
-  else if (a.type === "DRINK_CANCEL" && !d.filling && d.fill === 0) {
-    getOrder(s, d.orderId).units.find((x) => x.uid === d.uid).busy = false;
-    s.drink = null;
-  }
+  } else if (a.type === "DRINK_REMOVE_CUP" && t) {
+    t.cups = t.cups.filter((c) => c.id !== a.id);
+    if (!t.cups.length) s.drinkTray = null;
+  } else if (a.type === "DRINK_CLEAR") s.drinkTray = null;
+  else if (a.type === "DRINK_CONFIRM" && t && t.cups.length) confirmDrinks(s);
+}
+
+function restock(s, ing) {
+  if (!INGREDIENTS[ing] || s.deliveries.some((d) => d.ing === ing)) return;
+  s.deliveries.push({ ing, qty: RESTOCK.qty, at: s.clock + RESTOCK.seconds });
+  fx(s, `Stok ${INGREDIENTS[ing].name} sedang dihantar (${RESTOCK.seconds} saat).`, "info");
 }
 
 function deliver(s, orderId, force) {
@@ -493,12 +557,15 @@ export function reducer(state, a) {
   switch (a.type) {
     case "TICK": tick(s, a.dt); break;
     case "PAUSE": s.paused = true; break;
+    case "OPEN_MENU": s.menuOpen = true; s.paused = true; s.menuPaused = true; break;
+    case "CLOSE_MENU": s.menuOpen = false; s.paused = false; s.menuPaused = false; break;
     case "RESUME": s.paused = false; break;
     case "SET_STATION": s.station = a.station; break;
     case "SELECT_ORDER": s.selectedOrderId = a.orderId; break;
     case "SELECT_CUSTOMER": s.selectedCustomerId = a.customerId; s.station = "counter"; break;
     case "TAKE_ORDER": takeOrder(s, a.customerId); break;
     case "CLOSE_PACK_WARN": s.packWarn = null; break;
+    case "RESTOCK": restock(s, a.ing); break;
     case "PACK_ADD": case "PACK_REMOVE": {
       const o = getOrder(s, a.orderId);
       const u = o && o.status === "paid" && o.units.find((x) => x.uid === a.uid);

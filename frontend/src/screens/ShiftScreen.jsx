@@ -40,7 +40,7 @@ function useKeys(state, dispatch) {
   useEffect(() => {
     const onKey = (e) => {
       const s = ref.current;
-      if (e.target.tagName === "INPUT" || s.ended || s.packWarn) return;
+      if (e.target.tagName === "INPUT" || s.ended || s.packWarn || s.menuOpen) return;
       if (e.key === "Escape" || e.key.toLowerCase() === "p") { dispatch({ type: s.paused ? "RESUME" : "PAUSE" }); return; }
       if (s.paused) return;
       const o = s.station === "register" && s.orders.find((x) => x.id === s.selectedOrderId && x.status === "awaiting_payment" && x.payment.stage === "bill");
