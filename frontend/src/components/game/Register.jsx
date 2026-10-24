@@ -148,7 +148,7 @@ export const Register = () => {
         ))}
         {o && (
           <button data-testid="register-hint-button" className="rb-btn rb-white text-sm flex items-center gap-1" disabled={o.payment.hint >= (o.payment.stage === "bill" ? 2 : 3)} onClick={() => dispatch({ type: "REG_HINT", orderId: o.id })}>
-            <Lightbulb size={15} /> Petunjuk <span className="text-[10px] text-[var(--muted)]">(kurangkan bonus)</span>
+            <Lightbulb size={15} /> Petunjuk <span className="text-xs font-semibold text-[var(--tomato-dark)]">(tip berkurang)</span>
           </button>
         )}
       </StationHeader>

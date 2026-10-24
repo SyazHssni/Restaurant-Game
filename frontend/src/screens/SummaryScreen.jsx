@@ -30,7 +30,7 @@ const Worked = ({ ex }) => (
   </div>
 );
 
-export default function SummaryScreen({ sum, save, onNext, onMenu, onRestartBusiness }) {
+export default function SummaryScreen({ sum, save, unlockNote, onNext, onMenu, onRestartBusiness }) {
   const l = sum.ledger;
   return (
     <div className="min-h-screen max-w-6xl mx-auto px-6 md:px-12 py-10" data-testid="summary-screen">
@@ -83,7 +83,8 @@ export default function SummaryScreen({ sum, save, onNext, onMenu, onRestartBusi
           <p className="text-xs text-[var(--muted)] mt-3 flex gap-1"><CheckCircle2 size={14} className="shrink-0" />Keputusan wang dikira di mesin tunai; keputusan makanan dikira semasa menghidang.</p>
         </Box>
       </div>
-      <div className="flex gap-3 mt-8 flex-wrap">
+      {unlockNote && !save.bankrupt && <p className="mt-8 text-sm font-semibold bg-[#fff1cf] border-2 border-[var(--mustard-dark)] rounded-xl px-4 py-2 inline-block" data-testid="unlock-note">Hari {save.day}: {unlockNote}</p>}
+      <div className="flex gap-3 mt-6 flex-wrap">
         {save.bankrupt
           ? <button data-testid="summary-restart-business" className="rb-btn rb-red text-lg px-8" onClick={onRestartBusiness}>Mula Semula Perniagaan</button>
           : <button data-testid="summary-next-day" className="rb-btn rb-red text-lg px-8" onClick={onNext}>Teruskan ke Hari {save.day}</button>}

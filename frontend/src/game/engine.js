@@ -12,7 +12,7 @@ export const TUTORIAL_STEPS = [
   { station: "fryer", title: "Goreng kentang", text: "Pergi ke Penggoreng (kekunci 4). Tekan Goreng pada kentang goreng. Angkat bila tertera 'Sedia' — jangan biar hangus!" },
   { station: "drinks", title: "Sediakan minuman", text: "Pergi ke Minuman (kekunci 6). Pilih kola, semak saiz dan ais, tekan 'Isi Cawan' dan 'Berhenti' bila air berada dalam jalur hijau." },
   { station: "packing", title: "Bungkus dan hidang", text: "Pergi ke Pembungkusan (kekunci 7). Masukkan setiap item ke dalam beg, semak senarai, kemudian tekan 'Hantar Pesanan'." },
-  { station: null, title: "Hebat! Anda bersedia.", text: "Syif sebenar bermula sekarang dalam Mod Cabaran. Pelanggan akan datang dan masa akan berjalan. Selamat berniaga!" },
+  { station: null, title: "Hebat! Anda bersedia.", text: "Syif sebenar bermula sekarang mengikut tahap matematik dalam Tetapan. Pelanggan akan datang dan masa akan berjalan. Selamat berniaga!" },
 ];
 
 const tutorialDone = (s, step) => {

@@ -1,0 +1,33 @@
+{
+  "summary": "Frontend-only E2E testing of Rush Bite (Kedai Burger Matematik) with Playwright at 1920x1080 and 1920x800, using ?speed=10 and ?seed= for shift-end tests. Almost all requested flows work and there were no console/page errors in any run. Tested: main menu (all 5 test ids, BM text, Continue disabled with no save, new-game confirm dialog when a save exists), the full tutorial (9 steps through grill flip/remove, assembly, fryer, drinks fill 91%, packing, deliver 5 stars, tutorial-start-shift; save gets tutorialDone=true), tutorial-skip and replay from How to Play, wrong bill (bill-feedback shown, input cleared, ticket patience 99.9%->87.7%, hud-math-score 0%, funds unchanged), hints (line totals, then RM22.20 total, then 'Baki perlu diberi: RM0.80'), Undo/Clear/Recount (denom-left 100->98->99->100, recount RM0.90), too much change ('Baki terlebih RM0.10', shortages RM0.10), too little ('Baki kurang RM1.00', penalty RM2.00), exact-payment button (RM0.00 counted correct), stations show only paid orders (order-picker-empty before payment, Alt+digit switches station on bill step), burnt patty (Hangus + grill-discard-0, discard frees slot), burnt fries (Hangus + fryer-discard-0, no remove button), pack warning dialog (review closes it, serve-anyway delivers with 1 star, 0 accuracy, 50% refund), pause (timer frozen at 3:22 for 2.5s, Esc/P toggle, resume, quit to menu), real shift at 10x (customers spawn, leave when ignored, timer counts down, 'Masa tambahan' grace 0:30->0:01, then Syif Tamat and summary), and the summary ledger: sales 50.20 - refunds 50.20 - shortages 0.10 - penalties 2.00 = net -2.10 OK; 300.00 - 2.10 - 25.00 = 272.90 OK. Summary has separate maths and food boxes, a worked example and an unlock note. Next Day starts Hari 2, and Continue after reload resumes Hari 2. Also checked: 'Perniagaan berisiko' warning, insolvent warning after one shift at or below RM0, bankruptcy after the second (bankrupt-panel, summary-restart-business, menu bankrupt-notice, Continue disabled), settings persist after reload (guided/santai/large/RM/HC/volume 60), Guided mode shows line totals, Credits and back-button. At 1920x800 the page has no overflow; the station panel scrolls inside.",
+  "backend_issues": {"critical": [], "minor": []},
+  "frontend_issues": {
+    "ui_bugs": [
+      {"component": "ShiftScreen useKeys + PackWarn AlertDialog", "issue": "Pressing Esc with pack-warning-dialog open closes the dialog and also opens the Pause menu. Digit keys 1-7 also switch stations behind the open modal. The global keydown handler does not ignore input while a modal is open.", "selector": "[data-testid='pack-warning-dialog']", "priority": "MEDIUM"},
+      {"component": "TUTORIAL_STEPS[8] (engine.js)", "issue": "The last tutorial step always says 'Syif sebenar bermula sekarang dalam Mod Cabaran' even when the mode is Guided or Mental (seen with Mod Berpandu).", "selector": "[data-testid='tutorial-text']", "priority": "LOW"}
+    ],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Summary", "issues": ["unlock-note ('Hari 2: Baharu: ...') is rendered outside the min-h-screen summary container, so at 1080 height it sits at the very bottom, far below the action buttons. Move it into SummaryScreen near the Next Day button."]},
+      {"screen": "Register", "issues": ["'(kurangkan bonus)' text inside the hint button is 10px muted and hard to read."]}
+    ]
+  },
+  "test_report_links": [],
+  "action_items": [
+    "In ShiftScreen useKeys, return early when s.packWarn is set (or when a [role=alertdialog] is open) so that Esc and digit keys do not pause the game or switch stations behind the pack warning dialog",
+    "Make the last tutorial step text depend on the mode (or remove the hardcoded 'Mod Cabaran')",
+    "Move the unlock note into SummaryScreen layout, above or beside the action buttons"
+  ],
+  "critical_code_review_comments": [
+    "Tutorial order revenue, tips and stats (math score 100%, streak 1) carry into the Day 1 real shift ledger and summary, because TUTORIAL_FINISH keeps the ledger and stats. Decide whether that is intended; if not, reset ledger and stats on TUTORIAL_FINISH.",
+    "commitPayment under-change: if makeChange(-diff, drawer) returns null, the drawer is not debited for the returned difference but the ledger assumes it was. Rare, but the drawer count and cash can drift.",
+    "The hint button label says '(kurangkan bonus)' but hints only halve the tip (tipFor) and do not affect the streak bonus. The wording may mislead.",
+    "Main-menu and summary rb-rise animations make content look faded when a screenshot is taken right after navigation. This is cosmetic only."
+  ],
+  "updated_files": [],
+  "success_rate": {"backend": "N/A (frontend only)", "frontend": "~96% (all requested flows pass; 2 minor bugs)"},
+  "seed_data_creation": "None. Tests inject localStorage rushbite_save_v1 directly (e.g. {day:1,funds:30000,tutorialDone:true}) to skip the tutorial, and funds 1000 to test bankruptcy.",
+  "retest_needed": false,
+  "should_main_agent_self_test": true,
+  "context_for_next_testing_agent": "Use ?speed=10&seed=N for deterministic fast shifts (a day takes about 30s real time). Inject a save via localStorage to skip the tutorial. Summary values are shown with a '−' prefix on deduction rows (it is a sign label, not a negative value). Grill and fryer status text is in grill-status-0 / fryer-status-0; poll for 'Terbalikkan sekarang!' / 'Sedia'. Exact-tender orders occur often (seed 12345, first order)."
+}

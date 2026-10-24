@@ -63,8 +63,7 @@ function App() {
       )}
       {screen === "summary" && summary && (
         <>
-          <SummaryScreen sum={summary} save={save} onNext={() => start(save, false)} onMenu={back} onRestartBusiness={restartBusiness} />
-          {UNLOCK_NOTES[save.day] && !save.bankrupt && <p className="max-w-6xl mx-auto px-6 md:px-12 -mt-4 pb-10 text-sm font-semibold" data-testid="unlock-note">Hari {save.day}: {UNLOCK_NOTES[save.day]}</p>}
+          <SummaryScreen sum={summary} save={save} unlockNote={UNLOCK_NOTES[save.day]} onNext={() => start(save, false)} onMenu={back} onRestartBusiness={restartBusiness} />
         </>
       )}
     </div>
