@@ -48,11 +48,26 @@ function useKeys(state, dispatch) {
       if (o && !e.altKey && /^[0-9.]$/.test(e.key)) { dispatch({ type: "REG_KEY", orderId: o.id, key: e.key }); e.preventDefault(); return; }
       if (o && e.key === "Backspace") { dispatch({ type: "REG_KEY", orderId: o.id, key: "back" }); return; }
       if (o && e.key === "Enter") { dispatch({ type: "REG_SUBMIT", orderId: o.id }); e.preventDefault(); return; }
+      const dp = s.drinkPrep;
+      if (dp && s.station === "drinks" && e.code === "Space") {
+        e.preventDefault();
+        if (e.repeat) return;
+        const map = { ice: "DRINK_GAME_ICE", heat: "DRINK_GAME_HEAT_START", pour: "DRINK_GAME_POUR_START", stir: "DRINK_GAME_STIR", lid: "DRINK_GAME_LID" };
+        dispatch({ type: map[dp.step] });
+        return;
+      }
       const st = STATIONS.find((x) => x.key === e.key);
       if (st) dispatch({ type: "SET_STATION", station: st.id });
     };
+    const onUp = (e) => {
+      const dp = ref.current.drinkPrep;
+      if (e.code !== "Space" || !dp) return;
+      if (dp.step === "pour") dispatch({ type: "DRINK_GAME_POUR_STOP" });
+      if (dp.step === "heat") dispatch({ type: "DRINK_GAME_HEAT_STOP" });
+    };
     window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
+    window.addEventListener("keyup", onUp);
+    return () => { window.removeEventListener("keydown", onKey); window.removeEventListener("keyup", onUp); };
   }, [dispatch]);
 }
 

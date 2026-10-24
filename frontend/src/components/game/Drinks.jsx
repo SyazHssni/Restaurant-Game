@@ -3,6 +3,7 @@ import { X, Minus, Plus, CheckCircle2, AlertTriangle } from "lucide-react";
 import { useGame, StationHeader, OrderPicker } from "./shared";
 import { DRINKS, SIZE_NAMES, TEMPS } from "../../game/config";
 import { drinkLabel } from "../../game/engine";
+import { DrinkGame } from "./DrinkGame";
 
 const needsDrink = (o) => o.units.some((u) => u.kind === "drink" && u.state === "todo");
 const GROUPS = [...new Set(Object.values(DRINKS).map((d) => d.group))];
@@ -49,6 +50,13 @@ const Config = ({ o }) => {
   const set = (k, v) => setCfg((c) => ({ ...c, [k]: v, ...(k === "flavour" && c.temp && !DRINKS[v].temps.includes(c.temp) ? { temp: null } : {}) }));
   const prepare = () => { dispatch({ type: "DRINK_PREPARE", orderId: o.id, ...cfg }); setCfg((c) => ({ ...c, qty: 1 })); };
   const allowed = cfg.flavour ? DRINKS[cfg.flavour].temps : [];
+  const dp = s.drinkPrep;
+  if (dp) return (
+    <div className="space-y-4">
+      {dp.orderId === o.id ? <DrinkGame dp={dp} /> : <p className="text-sm font-semibold text-[var(--tomato-dark)]" data-testid="drink-game-other">Minuman untuk tiket #{dp.orderNum} sedang dibuat. Pilih tiket itu untuk menyiapkannya.</p>}
+      <Tray o={o} feedback={null} />
+    </div>
+  );
   return (
     <div className="space-y-3" data-testid="drink-config">
       <p className="rb-display font-extrabold text-lg">Penyediaan Minuman</p>
@@ -85,6 +93,7 @@ const Config = ({ o }) => {
         </div>
       </div>
       <button data-testid="drink-prepare-button" className="rb-btn rb-red" disabled={!cfg.flavour || !cfg.size || !cfg.temp} onClick={prepare}>Sediakan</button>
+      <span className="text-xs text-[var(--muted)] ml-2">Selepas ini, buat setiap cawan dalam permainan mini (Space juga boleh digunakan).</span>
       <Tray o={o} feedback={s.drinkFeedback && s.drinkFeedback.orderId === o.id ? s.drinkFeedback : null} />
     </div>
   );
@@ -103,7 +112,7 @@ const Tray = ({ o, feedback }) => {
         {t && t.cups.map((c) => (
           <span key={c.id} className="rb-pop inline-flex items-center gap-1 bg-white border-2 border-[var(--line)] rounded-full pl-1 pr-2 py-0.5 text-xs font-semibold">
             <span className="w-4 h-4 rounded-full border border-black/40" style={{ background: DRINKS[c.flavour].color }} />
-            {drinkLabel(c)}
+            {drinkLabel(c)}{c.quality != null && <span className="text-[var(--muted)]"> · {c.quality}</span>}
             <button data-testid={`drink-cup-remove-${c.id}`} onClick={() => dispatch({ type: "DRINK_REMOVE_CUP", id: c.id })} aria-label="Buang cawan"><X size={12} /></button>
           </span>
         ))}

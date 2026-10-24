@@ -25,6 +25,7 @@ const Ticket = ({ o }) => {
         <Portrait look={o.customer.look} mood={moodFor(r, o.angry)} size={36} />
         <div className="flex-1 min-w-0">
           <p className="rb-display font-extrabold leading-none">#{o.num} <span className="font-semibold text-sm">{o.customer.name}</span></p>
+          {o.bulk && <span className="inline-block mt-1 mr-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-[var(--charcoal)] text-white" data-testid={`ticket-bulk-${o.num}`}>Pesanan Besar · {o.units.length} item</span>}
           <span className={`inline-flex items-center gap-1 mt-1 text-[11px] font-semibold px-2 py-0.5 rounded-full ${st.cls}`} data-testid={`ticket-status-${o.num}`}><Icon size={12} />{st.text}</span>
         </div>
       </div>

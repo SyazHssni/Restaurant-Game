@@ -141,6 +141,21 @@ export const DRINKS = {
 };
 export const drinkPrice = (flavour, size) => DRINK_TIERS[DRINKS[flavour].tier][size];
 export const DRINK_COST = { S: 30, M: 40, L: 50 };
+// Drink minigame: ice / heat, pour to the line, then stir/pull or lid.
+export const DRINK_GAME = {
+  ice: { S: 2, M: 3, L: 4 },
+  heat: { rate: 22, start: 25, target: [70, 85], burn: 96 },
+  pour: { rate: { S: 0.42, M: 0.36, L: 0.3 }, target: [0.85, 1.0], spill: 1.15 },
+  stir: { speed: 1.3, sweet: [0.4, 0.6], hits: { teh_tarik: 3, kopi_susu: 2, latte: 2, coklat_panas: 2, coklat_ais: 2, susu_segar: 1, bandung: 2, air_jagung: 1, teh_o_limau: 1, sirap_limau: 1 } },
+};
+export function drinkSteps(flavour, temp) {
+  const steps = [];
+  if (temp === "sejuk") steps.push("ice");
+  if (temp === "panas") steps.push("heat");
+  steps.push("pour");
+  steps.push(DRINK_GAME.stir.hits[flavour] ? "stir" : "lid");
+  return steps;
+}
 export const SIZE_NAMES = { S: "Kecil", M: "Sederhana", L: "Besar", 4: "4 ketul", 6: "6 ketul" };
 
 export const DISCOUNTS = [
@@ -187,9 +202,9 @@ const BASE_DAYS = [
     menu: { fries: ["S", "M"], bites: [], sizes: ["S", "M"] } },
   { customers: 8, interval: [25, 31], maxQueue: 4, maxActive: 4, target: 3500, maxLines: 3, maxQty: 2, discount: true, exclusions: true,
     menu: { fries: ["S", "M", "L"], bites: [], sizes: ["S", "M", "L"] } },
-  { customers: 8, interval: [24, 30], maxQueue: 4, maxActive: 4, target: 4000, maxLines: 3, maxQty: 3, discount: true, exclusions: true,
+  { customers: 8, interval: [24, 30], maxQueue: 4, maxActive: 4, target: 4600, maxLines: 3, maxQty: 3, bulk: 0.3, discount: true, exclusions: true,
     menu: { fries: ["S", "M", "L"], bites: ["4", "6"], sizes: ["S", "M", "L"] } },
-  { customers: 9, interval: [22, 28], maxQueue: 4, maxActive: 4, target: 4600, maxLines: 3, maxQty: 3, discount: true, exclusions: true,
+  { customers: 9, interval: [22, 28], maxQueue: 4, maxActive: 4, target: 5400, maxLines: 3, maxQty: 3, bulk: 0.4, discount: true, exclusions: true,
     menu: { fries: ["S", "M", "L"], bites: ["4", "6"], sizes: ["S", "M", "L"] } },
 ];
 
@@ -215,6 +230,7 @@ export function dayConfig(day, settings) {
     ...base,
     menu: { ...base.menu, burgers: unlocked(BURGERS), drinks: unlocked(DRINKS) },
     customers: base.customers + Math.min(extra, 6),
+    bulk: base.bulk ? Math.min(0.6, base.bulk + extra * 0.05) : 0,
     interval: base.interval.map((v) => Math.max(16, v - extra)),
     target: base.target + extra * 400,
     patienceMod: td.patience,

@@ -63,8 +63,42 @@ export function pickCustomerType(rng, recentTypes) {
   return pick(rng, pool.length ? pool : CUSTOMER_TYPES);
 }
 
+// Large mixed orders from Day 4: several burgers, several drinks, sides, many configurations.
+function generateBulkLines(rng, cfg, type) {
+  const lines = [];
+  const add = (kind, qty) => {
+    const l = { ...buildLine(rng, kind, cfg, type, cfg.exclusions), qty };
+    const dup = lines.find((x) => lineKey(x) === lineKey(l));
+    if (dup) dup.qty += qty;
+    else lines.push(l);
+  };
+  const split = (total, kind) => {
+    let left = total;
+    while (left > 0) {
+      const q = left === 1 || rng() < 0.4 ? left : 1 + Math.floor(rng() * (left - 1));
+      add(kind, q);
+      left -= q;
+    }
+  };
+  if (cfg.menu.burgers.length) split(2 + Math.floor(rng() * 3), "burger");
+  split(2 + Math.floor(rng() * 2), "drink");
+  split(1 + Math.floor(rng() * 2), "fries");
+  if (cfg.menu.bites.length && rng() < 0.5) add("bites", 1);
+  return lines;
+}
+
 export function generateLines(rng, cfg, mode, type) {
   const challenge = mode === "challenge";
+  if (cfg.bulk && (rng() < cfg.bulk || (type.family && rng() < 0.7))) {
+    const bulk = generateBulkLines(rng, cfg, type);
+    let units = bulk.reduce((a, l) => a + l.qty, 0);
+    while (units > 10 || orderTotal(bulk, 0) > 8000) {
+      const big = bulk.reduce((a, b) => (b.qty > a.qty ? b : a));
+      if (big.qty > 1) big.qty -= 1; else bulk.splice(bulk.indexOf(big), 1);
+      units = bulk.reduce((a, l) => a + l.qty, 0);
+    }
+    return bulk.map((l, i) => ({ ...l, lid: `L${i + 1}` }));
+  }
   let maxLines = cfg.maxLines + (challenge ? 1 : 0);
   let nLines = type.simple ? 1 + Math.floor(rng() * 2) : 1 + Math.floor(rng() * maxLines);
   if (type.family) nLines = Math.max(2, Math.min(maxLines + 1, nLines + 1));
@@ -151,7 +185,7 @@ export function buildOrderDraft(rng, cfg, mode, type, drawer) {
   const discount = pickDiscount(rng, cfg, mode, subtotal);
   const total = subtotal - (discount ? discount.amount : 0);
   const tender = generateTender(rng, total, mode, drawer);
-  return { lines, discount, total, tender };
+  return { lines, discount, total, tender, bulk: lines.reduce((a, l) => a + l.qty, 0) >= 7 };
 }
 
 export const TUTORIAL_DRAFT = {
