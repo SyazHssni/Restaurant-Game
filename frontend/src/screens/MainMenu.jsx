@@ -1,0 +1,69 @@
+import { useState } from "react";
+import { Play, RotateCcw, BookOpen, Settings, Award, AlertTriangle } from "lucide-react";
+import { BurgerStack, Money } from "../components/game/Art";
+import { formatRM } from "../game/money";
+import {
+  AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
+} from "../components/ui/alert-dialog";
+
+const HERO = ["bun_bottom", "sauce_house", "patty_beef", "cheese", "lettuce", "tomato", "bun_top"];
+
+export default function MainMenu({ save, onNew, onContinue, onRestartBusiness, go }) {
+  const [confirm, setConfirm] = useState(false);
+  const hasSave = !!save && (save.history.length > 0 || save.tutorialDone);
+  const newGame = () => (hasSave ? setConfirm(true) : onNew());
+  return (
+    <div className="min-h-screen grid lg:grid-cols-[1.1fr_1fr] items-center gap-10 px-6 md:px-16 py-10 max-w-7xl mx-auto" data-testid="main-menu">
+      <div className="space-y-8">
+        <div className="rb-rise">
+          <p className="inline-block bg-[var(--mustard)] border-2 border-[var(--charcoal)] rounded-full px-4 py-1 text-sm font-semibold">Operasi gabungan melibatkan wang</p>
+          <h1 className="rb-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.9] mt-4 text-[var(--tomato)]" style={{ textShadow: "4px 4px 0 var(--charcoal)" }}>Rush Bite</h1>
+          <p className="rb-display text-2xl sm:text-3xl font-bold mt-2">Kedai Burger Matematik</p>
+          <p className="text-base mt-3 max-w-lg text-[var(--muted)]">Ambil pesanan, kira bil dan baki dalam kepala, beri wang baki yang tepat, kemudian masak dan hidangkan. Kira betul — kedai untung. Selalu salah — kedai boleh muflis!</p>
+        </div>
+        {save && save.bankrupt && (
+          <div className="rb-card p-4 border-[var(--tomato)] flex gap-3 items-start" data-testid="bankrupt-notice">
+            <AlertTriangle className="text-[var(--tomato)] shrink-0" />
+            <div className="space-y-2">
+              <p className="font-semibold">Kedai anda telah muflis selepas dana kekal RM0.00 atau kurang selama dua syif.</p>
+              <button data-testid="restart-business-button" className="rb-btn rb-red" onClick={onRestartBusiness}>Mula Semula Perniagaan</button>
+            </div>
+          </div>
+        )}
+        <div className="flex flex-col gap-3 max-w-sm rb-rise" style={{ animationDelay: "0.1s" }}>
+          <button data-testid="menu-new-game" className="rb-btn rb-red text-xl py-3 flex items-center justify-center gap-2" onClick={newGame}><Play size={20} />Permainan Baru</button>
+          <button data-testid="menu-continue" className="rb-btn rb-yellow text-xl py-3 flex items-center justify-center gap-2" disabled={!hasSave || save.bankrupt} onClick={onContinue}>
+            <RotateCcw size={20} />Teruskan{hasSave && !save.bankrupt ? ` — Hari ${save.day}` : ""}
+          </button>
+          <div className="grid grid-cols-3 gap-2">
+            <button data-testid="menu-how-to-play" className="rb-btn rb-white text-sm flex flex-col items-center gap-1 py-2 rounded-2xl" onClick={() => go("howto")}><BookOpen size={18} />Cara Bermain</button>
+            <button data-testid="menu-settings" className="rb-btn rb-white text-sm flex flex-col items-center gap-1 py-2 rounded-2xl" onClick={() => go("settings")}><Settings size={18} />Tetapan</button>
+            <button data-testid="menu-credits" className="rb-btn rb-white text-sm flex flex-col items-center gap-1 py-2 rounded-2xl" onClick={() => go("credits")}><Award size={18} />Kredit</button>
+          </div>
+        </div>
+        {hasSave && !save.bankrupt && <p className="text-sm text-[var(--muted)]" data-testid="menu-save-info">Simpanan: Hari {save.day} · Dana {formatRM(save.funds)} · Reputasi {save.reputation}/100</p>}
+      </div>
+      <div className="relative hidden lg:flex items-center justify-center h-[520px]" aria-hidden="true">
+        <div className="absolute w-[420px] h-[420px] rounded-full bg-[var(--mustard)] border-4 border-[var(--charcoal)]" />
+        <div className="absolute w-[340px] h-[340px] rounded-full border-4 border-dashed border-[rgba(43,42,40,0.3)]" />
+        <div className="relative scale-[1.9]"><BurgerStack layers={HERO} width={130} /></div>
+        <div className="absolute top-10 right-6 rotate-12 rb-wiggle"><Money denom={1000} scale={1.4} /></div>
+        <div className="absolute bottom-16 left-4 -rotate-12"><Money denom={500} scale={1.3} /></div>
+        <div className="absolute bottom-8 right-20"><Money denom={50} scale={1.5} /></div>
+        <div className="absolute top-24 left-12"><Money denom={20} scale={1.4} /></div>
+      </div>
+      <AlertDialog open={confirm} onOpenChange={setConfirm}>
+        <AlertDialogContent data-testid="new-game-confirm-dialog">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Mulakan permainan baharu?</AlertDialogTitle>
+            <AlertDialogDescription>Kemajuan kempen semasa (Hari {save?.day}) akan digantikan. Tetapan anda kekal.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="new-game-cancel">Batal</AlertDialogCancel>
+            <button data-testid="new-game-confirm" className="rb-btn rb-red" onClick={() => { setConfirm(false); onNew(); }}>Ya, mula baharu</button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
+  );
+}
