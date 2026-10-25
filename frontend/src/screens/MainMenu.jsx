@@ -49,8 +49,8 @@ export default function MainMenu({ save, settings, onNew, onContinue, onRestartB
         </div>
         {hasSave && !save.bankrupt && <p className="text-sm text-[var(--muted)]" data-testid="menu-save-info">Simpanan: Hari {save.day} · Dana {formatRM(save.funds)} · Reputasi {save.reputation}/100</p>}
       </div>
-      <div className="relative hidden lg:flex items-center justify-center h-[520px]">
-        <div className="relative aspect-square w-full max-w-[520px]">
+      <div className="relative flex items-center justify-center h-[320px] sm:h-[420px] lg:h-[520px]">
+        <div className="relative aspect-square w-full max-w-[300px] sm:max-w-[380px] lg:max-w-[520px]">
           <img src={`${process.env.PUBLIC_URL}/title-screen-storefront.png`} alt="Ilustrasi kedai burger dengan seekor kucing" className="block w-full h-full object-contain" />
           <button
             type="button"
