@@ -44,6 +44,8 @@ function getLoopPlayer(name) {
       loading: null,
       source: null,
       targetVolume: 0,
+      temporarilyMuted: false,
+      pauseTimer: null,
       fadeTimer: null,
     });
   }
@@ -95,7 +97,7 @@ function startLoop(entry) {
   entry.source = source;
   entry.gain = gain;
   source.start();
-  fadeLoopVolume(entry, entry.active ? entry.targetVolume : 0);
+  fadeLoopVolume(entry, entry.active && !entry.temporarilyMuted ? entry.targetVolume : 0);
 }
 
 function loadLoop(name, entry) {
@@ -130,6 +132,11 @@ export function syncLoopingSound(name, active, volume) {
   entry.targetVolume = nextTarget;
 
   if (!entry.active) {
+    if (entry.pauseTimer) {
+      clearTimeout(entry.pauseTimer);
+      entry.pauseTimer = null;
+      entry.temporarilyMuted = false;
+    }
     if (entry.gain && (targetChanged || wasActive || !entry.fadeTimer)) fadeLoopVolume(entry, 0);
     return;
   }
@@ -138,9 +145,24 @@ export function syncLoopingSound(name, active, volume) {
     return;
   }
   if (!entry.source) startLoop(entry);
-  if (entry.gain && (targetChanged || !wasActive || !entry.fadeTimer)) fadeLoopVolume(entry, entry.targetVolume);
+  const desiredVolume = entry.temporarilyMuted ? 0 : entry.targetVolume;
+  if (entry.gain && (targetChanged || !wasActive || !entry.fadeTimer)) fadeLoopVolume(entry, desiredVolume);
 }
 
+export function brieflyPauseLoopingSound(name, duration = 140) {
+  const entry = getLoopPlayer(name);
+  if (!entry || !entry.active) return;
+  entry.temporarilyMuted = true;
+  if (entry.fadeTimer) clearInterval(entry.fadeTimer);
+  entry.fadeTimer = null;
+  if (entry.gain) entry.gain.gain.value = 0;
+  if (entry.pauseTimer) clearTimeout(entry.pauseTimer);
+  entry.pauseTimer = setTimeout(() => {
+    entry.pauseTimer = null;
+    entry.temporarilyMuted = false;
+    if (entry.active && entry.gain) fadeLoopVolume(entry, entry.targetVolume);
+  }, Math.max(0, Number(duration) || 0));
+}
 export function stopLoopingSounds() {
   Object.keys(LOOP_SOUNDS).forEach((name) => syncLoopingSound(name, false, 0));
 }
