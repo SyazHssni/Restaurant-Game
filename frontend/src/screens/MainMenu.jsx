@@ -7,13 +7,14 @@ import {
 
 export default function MainMenu({ save, settings, onNew, onContinue, onRestartBusiness, go }) {
   const [confirm, setConfirm] = useState(false);
+  const [catLaughing, setCatLaughing] = useState(false);
   const catLaughAudio = useRef(null);
   const playCatLaugh = () => {
     const audio = catLaughAudio.current;
     if (!audio) return;
-    audio.volume = Math.max(0, Math.min(1, (Number(settings?.volume) || 0) / 100));
+    audio.volume = Math.max(0, Math.min(1, (Number(settings?.volume ?? 70) || 0) / 100));
     audio.currentTime = 0;
-    audio.play().catch(() => {});
+    audio.play().catch(() => setCatLaughing(false));
   };
   const hasSave = !!save && (save.history.length > 0 || save.tutorialDone);
   const newGame = () => (hasSave ? setConfirm(true) : onNew());
@@ -51,7 +52,11 @@ export default function MainMenu({ save, settings, onNew, onContinue, onRestartB
       </div>
       <div className="relative flex items-center justify-center h-[320px] sm:h-[420px] lg:h-[520px]">
         <div className="relative aspect-square w-full max-w-[300px] sm:max-w-[380px] lg:max-w-[520px]">
-          <img src={`${process.env.PUBLIC_URL}/title-screen-storefront.png`} alt="Ilustrasi kedai burger dengan seekor kucing" className="block w-full h-full object-contain" />
+          <img
+            src={`${process.env.PUBLIC_URL}/${catLaughing ? "title-screen-storefront-clicked.png" : "title-screen-storefront.png"}`}
+            alt="Ilustrasi kedai burger dengan seekor kucing"
+            className="block w-full h-full object-contain"
+          />
           <button
             type="button"
             data-testid="cat-laugh-hotspot"
@@ -62,7 +67,15 @@ export default function MainMenu({ save, settings, onNew, onContinue, onRestartB
             className="absolute left-[37%] top-[40%] w-[30%] h-[30%] rounded-full cursor-pointer border-0 bg-transparent p-0 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--tomato)]"
           />
         </div>
-        <audio ref={catLaughAudio} preload="auto" src={`${process.env.PUBLIC_URL}/sfx/cat-laugh.mp3`} className="hidden" />
+        <audio
+          ref={catLaughAudio}
+          preload="auto"
+          src={`${process.env.PUBLIC_URL}/sfx/cat-laugh.mp3`}
+          className="hidden"
+          onPlay={() => setCatLaughing(true)}
+          onEnded={() => setCatLaughing(false)}
+          onError={() => setCatLaughing(false)}
+        />
       </div>
       <AlertDialog open={confirm} onOpenChange={setConfirm}>
         <AlertDialogContent data-testid="new-game-confirm-dialog">
