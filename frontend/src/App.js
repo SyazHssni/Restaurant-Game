@@ -93,14 +93,15 @@ function App() {
   const back = () => setScreen("menu");
   const playUiClick = (event) => {
     const target = event.target;
-    if (screen !== "shift" && target && typeof target.closest === "function" && target.closest("button")) {
+    const button = target && typeof target.closest === "function" ? target.closest("button") : null;
+    if (screen !== "shift" && button && !button.hasAttribute("data-skip-click-sound")) {
       playSound("tap", settings.volume);
     }
   };
 
   return (
     <div className="rb-app" onClickCapture={playUiClick}>
-      {screen === "menu" && <MainMenu save={save} onNew={onNew} onContinue={() => start(save, !save.tutorialDone && save.day === 1)} onRestartBusiness={restartBusiness} go={setScreen} />}
+      {screen === "menu" && <MainMenu save={save} settings={settings} onNew={onNew} onContinue={() => start(save, !save.tutorialDone && save.day === 1)} onRestartBusiness={restartBusiness} go={setScreen} />}
       {screen === "howto" && <HowToPlay onBack={back} onReplayTutorial={() => start(save && !save.bankrupt ? save : newSave(save), true)} />}
       {screen === "settings" && <SettingsScreen settings={settings} onChange={updateSettings} onBack={back} />}
       {screen === "credits" && <Credits onBack={back} />}

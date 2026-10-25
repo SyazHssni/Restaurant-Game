@@ -1,15 +1,20 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Play, RotateCcw, BookOpen, Settings, Award, AlertTriangle, Utensils } from "lucide-react";
-import { BurgerStack, Money } from "../components/game/Art";
 import { formatRM } from "../game/money";
 import {
   AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription, AlertDialogFooter, AlertDialogCancel,
 } from "../components/ui/alert-dialog";
 
-const HERO = ["bun_bottom", "sauce_house", "patty_beef", "cheese", "lettuce", "tomato", "bun_top"];
-
-export default function MainMenu({ save, onNew, onContinue, onRestartBusiness, go }) {
+export default function MainMenu({ save, settings, onNew, onContinue, onRestartBusiness, go }) {
   const [confirm, setConfirm] = useState(false);
+  const catLaughAudio = useRef(null);
+  const playCatLaugh = () => {
+    const audio = catLaughAudio.current;
+    if (!audio) return;
+    audio.volume = Math.max(0, Math.min(1, (Number(settings?.volume) || 0) / 100));
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  };
   const hasSave = !!save && (save.history.length > 0 || save.tutorialDone);
   const newGame = () => (hasSave ? setConfirm(true) : onNew());
   return (
@@ -17,10 +22,7 @@ export default function MainMenu({ save, onNew, onContinue, onRestartBusiness, g
       <div className="space-y-8">
         <div className="rb-rise">
           <p className="inline-block bg-[var(--mustard)] border-2 border-[var(--charcoal)] rounded-full px-4 py-1 text-sm font-semibold">Operasi gabungan melibatkan wang</p>
-          <div className="flex items-center gap-2 mt-4">
-            <img src={`${process.env.PUBLIC_URL}/logo.png`} alt="Logo Rush Bite" className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl border-2 border-[var(--charcoal)] shadow-[3px_3px_0_var(--charcoal)] object-cover shrink-0" />
-            <h1 className="rb-display text-6xl sm:text-7xl lg:text-8xl font-extrabold leading-[0.9] text-[var(--tomato)]" style={{ textShadow: "4px 4px 0 var(--charcoal)" }}>Rush Bite</h1>
-          </div>
+          <h1 className="rb-display mt-4 text-4xl sm:text-5xl lg:text-6xl font-extrabold leading-none whitespace-nowrap text-[var(--tomato)]" style={{ textShadow: "4px 4px 0 var(--charcoal)" }}>Max Burger's</h1>
           <p className="rb-display text-2xl sm:text-3xl font-bold mt-2">Kedai Burger Matematik</p>
           <p className="text-base mt-3 max-w-lg text-[var(--muted)]">Ambil pesanan, kira bil dan baki dalam kepala, beri wang baki yang tepat, kemudian masak dan hidangkan. Kira betul — kedai untung. Selalu salah — kedai boleh muflis!</p>
         </div>
@@ -47,14 +49,20 @@ export default function MainMenu({ save, onNew, onContinue, onRestartBusiness, g
         </div>
         {hasSave && !save.bankrupt && <p className="text-sm text-[var(--muted)]" data-testid="menu-save-info">Simpanan: Hari {save.day} · Dana {formatRM(save.funds)} · Reputasi {save.reputation}/100</p>}
       </div>
-      <div className="relative hidden lg:flex items-center justify-center h-[520px]" aria-hidden="true">
-        <div className="absolute w-[420px] h-[420px] rounded-full bg-[var(--mustard)] border-4 border-[var(--charcoal)]" />
-        <div className="absolute w-[340px] h-[340px] rounded-full border-4 border-dashed border-[rgba(43,42,40,0.3)]" />
-        <div className="relative scale-[1.9]"><BurgerStack layers={HERO} width={130} /></div>
-        <div className="absolute top-10 right-6 rotate-12 rb-wiggle"><Money denom={1000} scale={1.4} /></div>
-        <div className="absolute bottom-16 left-4 -rotate-12"><Money denom={500} scale={1.3} /></div>
-        <div className="absolute bottom-8 right-20"><Money denom={50} scale={1.5} /></div>
-        <div className="absolute top-24 left-12"><Money denom={20} scale={1.4} /></div>
+      <div className="relative hidden lg:flex items-center justify-center h-[520px]">
+        <div className="relative aspect-square w-full max-w-[520px]">
+          <img src={`${process.env.PUBLIC_URL}/title-screen-storefront.png`} alt="Ilustrasi kedai burger dengan seekor kucing" className="block w-full h-full object-contain" />
+          <button
+            type="button"
+            data-testid="cat-laugh-hotspot"
+            data-skip-click-sound
+            aria-label="Mainkan bunyi kucing"
+            title="Klik kucing"
+            onClick={playCatLaugh}
+            className="absolute left-[37%] top-[40%] w-[30%] h-[30%] rounded-full cursor-pointer border-0 bg-transparent p-0 hover:bg-white/10 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-[var(--tomato)]"
+          />
+        </div>
+        <audio ref={catLaughAudio} preload="auto" src={`${process.env.PUBLIC_URL}/sfx/cat-laugh.mp3`} className="hidden" />
       </div>
       <AlertDialog open={confirm} onOpenChange={setConfirm}>
         <AlertDialogContent data-testid="new-game-confirm-dialog">
