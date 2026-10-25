@@ -345,7 +345,6 @@ function putPatty(s, o, type) {
   s.grill[i] = { id: `G${s.idSeq++}`, orderId: o ? o.id : null, orderNum: o ? o.num : null, type, sideA: 0, sideB: 0, flipped: false, flipQ: null };
   if (o) cost(s, o, INGREDIENTS[ing].cost);
   else s.ledger.ingredients += INGREDIENTS[ing].cost;
-  sfx(s, "sizzle");
   return true;
 }
 
@@ -389,7 +388,6 @@ function fryer(s, a) {
     s.fryer[i] = { id: `F${s.idSeq++}`, orderId: o.id, orderNum: o.num, uid: u.uid, kind: u.kind, size: u.size, t: 0 };
     u.busy = true;
     cost(s, o, FRY_ITEMS[u.kind].cost[u.size]);
-    sfx(s, "sizzle");
     return;
   }
   const b = s.fryer[a.index];
@@ -604,7 +602,6 @@ function drinks(s, a) {
     s.drinkTray = tray;
     s.drinkPrep = newCup(s, o, { flavour: a.flavour, size: a.size, temp: a.temp }, qty, qty);
     if (s.drinkFeedback && s.drinkFeedback.orderId === o.id) s.drinkFeedback = null;
-    sfx(s, "pour");
     return;
   }
   if (a.type.startsWith("DRINK_GAME_")) { drinkGame(s, a); return; }

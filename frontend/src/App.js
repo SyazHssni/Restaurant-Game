@@ -7,11 +7,24 @@ import SettingsScreen from "./screens/SettingsScreen";
 import { HowToPlay, Credits, MenuScreen } from "./screens/InfoScreens";
 import { loadSave, writeSave, newSave, loadSettings, writeSettings } from "./game/storage";
 import { buildSummary } from "./game/summary";
-import { UNLOCK_NOTES } from "./game/config";
+import {
+  UNLOCK_NOTES, INGREDIENTS, PATTY_TEXTURES, CUP_TEXTURES,
+  CUP_COVER_TEXTURE, ICE_CUBE_TEXTURE, FRY_TEXTURES,
+} from "./game/config";
 import { getAudioContext, playSound } from "./game/sound";
 import { setMusicVolume, startBackgroundMusic, stopBackgroundMusic } from "./game/music";
 
 const FONT = { normal: "16px", large: "18px", xlarge: "20px" };
+const GAME_TEXTURES = Array.from(new Set([
+  ...Object.values(INGREDIENTS).map(({ texture }) => texture),
+  ...Object.values(PATTY_TEXTURES).flatMap((stages) => Object.values(stages)),
+  ...Object.values(CUP_TEXTURES),
+  CUP_COVER_TEXTURE,
+  ICE_CUBE_TEXTURE,
+  ...Object.values(FRY_TEXTURES),
+]));
+const preloadedGameImages = [];
+let gameTexturesPreloaded = false;
 
 function App() {
   const [screen, setScreen] = useState("menu");
@@ -23,6 +36,33 @@ function App() {
   const audioUnlocked = useRef(false);
 
   useEffect(() => { settingsRef.current = settings; }, [settings]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const preloadTextures = () => {
+      if (cancelled || gameTexturesPreloaded) return;
+      gameTexturesPreloaded = true;
+      GAME_TEXTURES.forEach((src) => {
+        const image = new Image();
+        image.decoding = "async";
+        image.fetchPriority = "low";
+        image.src = src;
+        preloadedGameImages.push(image);
+      });
+    };
+    let idleHandle;
+    let fallbackTimer;
+    if (typeof window.requestIdleCallback === "function") {
+      idleHandle = window.requestIdleCallback(preloadTextures, { timeout: 1500 });
+    } else {
+      fallbackTimer = window.setTimeout(preloadTextures, 200);
+    }
+    return () => {
+      cancelled = true;
+      if (idleHandle !== undefined) window.cancelIdleCallback?.(idleHandle);
+      if (fallbackTimer !== undefined) window.clearTimeout(fallbackTimer);
+    };
+  }, []);
 
   useEffect(() => {
     const unlockAudio = () => {
