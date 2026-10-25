@@ -1,4 +1,4 @@
-import { DENOM_INFO, INGREDIENTS, DRINKS } from "../../game/config";
+import { DENOM_INFO, INGREDIENTS, DRINKS, PATTY_TEXTURES, CUP_TEXTURES, CUP_COVER_TEXTURE, ICE_CUBE_TEXTURE, FRY_TEXTURES } from "../../game/config";
 
 const MOUTHS = {
   happy: "M14 27 Q20 33 26 27",
@@ -7,7 +7,9 @@ const MOUTHS = {
   angry: "M14 30 Q20 24 26 30",
 };
 
-export const Portrait = ({ look, mood = "waiting", size = 56 }) => (
+export const Portrait = ({ look, mood = "waiting", size = 56 }) => look?.image ? (
+  <img src={look.image} width={size} height={size} className="block rounded-full border border-[var(--charcoal)] bg-white object-cover" alt="" aria-hidden="true" />
+) : (
   <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
     <circle cx="20" cy="20" r="19" fill="#fff3d6" stroke="#2b2a28" strokeWidth="1.5" />
     <path d="M6 40 Q8 30 20 30 Q32 30 34 40 Z" fill={look.shirt} stroke="#2b2a28" strokeWidth="1.2" />
@@ -27,68 +29,116 @@ export const Portrait = ({ look, mood = "waiting", size = 56 }) => (
 
 export const Money = ({ denom, scale = 1, testId }) => {
   const info = DENOM_INFO[denom];
-  if (info.type === "coin") {
-    const d = (denom === 50 ? 46 : denom === 20 ? 40 : 36) * scale;
-    return (
-      <div data-testid={testId} className="rb-coin" style={{ width: d, height: d, background: info.color, fontSize: 11 * scale }}>
-        {denom}<span style={{ fontSize: 8 * scale, marginLeft: 1 }}>s</span>
-      </div>
-    );
-  }
+  const coinSize = denom === 50 ? 46 : denom === 20 ? 40 : 36;
+  const width = (info.type === "coin" ? coinSize : 78) * scale;
+  const height = (info.type === "coin" ? coinSize : 40) * scale;
   return (
-    <div data-testid={testId} className="rb-note" style={{ width: 78 * scale, height: 40 * scale, background: info.color, fontSize: 15 * scale }}>
-      {info.label}
+    <div data-testid={testId} className="flex shrink-0 items-center justify-center overflow-hidden" style={{ width, height }}>
+      <img
+        src={info.image}
+        alt={info.label}
+        width={width}
+        height={height}
+        className={`h-full w-full select-none ${info.type === "coin" ? "object-contain" : "object-cover"}`}
+        draggable="false"
+      />
     </div>
   );
 };
 
-const LAYER_H = { bun_bottom: 16, bun_top: 24, patty_beef: 14, patty_veg: 14, cheese: 6, lettuce: 8, tomato: 7, pickle: 6, sauce_house: 5 };
+
+const OVERLAP_BY_TOP_LAYER = { pickle: 52, tomato: 50, cheese: 50, sauce_house: 52 };
 
 export const BurgerStack = ({ layers, width = 150 }) => (
-  <div className="flex flex-col-reverse items-center" style={{ minHeight: 40 }} aria-label="Timbunan burger">
-    {layers.map((l, i) => {
-      const ing = typeof l === "string" ? l : l.ing;
-      const top = ing === "bun_top";
+  <div className="flex flex-col items-center" style={{ minHeight: 40 }} aria-label="Timbunan burger">
+    {[...layers].map((layer, index) => ({ layer, index })).reverse().map(({ layer, index }) => {
+      const ing = typeof layer === "string" ? layer : layer.ing;
+      const aboveLayer = layers[index + 1];
+      const aboveIng = aboveLayer ? (typeof aboveLayer === "string" ? aboveLayer : aboveLayer.ing) : null;
+      const overlap = OVERLAP_BY_TOP_LAYER[aboveIng] ?? 40;
+      const layerWidth = (ing === "lettuce" ? width + 10 : ing === "cheese" ? width + 4 : width) * 0.68;
       return (
-        <div key={i} className="rb-pop" title={INGREDIENTS[ing].name}
-          style={{
-            width: ing === "lettuce" ? width + 10 : ing === "cheese" ? width + 4 : width,
-            height: LAYER_H[ing], background: INGREDIENTS[ing].color, border: "1.5px solid rgba(43,42,40,.55)",
-            borderRadius: top ? "60px 60px 8px 8px" : ing === "bun_bottom" ? "6px 6px 18px 18px" : ing === "lettuce" ? 10 : 6,
-            marginTop: -2,
-          }} />
+        <img
+          key={index}
+          src={INGREDIENTS[ing].texture}
+          title={INGREDIENTS[ing].name}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          className="rb-pop select-none"
+          style={{ width: layerWidth, height: "auto", marginTop: index === layers.length - 1 ? 0 : -overlap, position: "relative", zIndex: index + 1 }}
+        />
       );
     })}
   </div>
 );
 
-export const Cup = ({ flavour, fill = 0, size = "M", ice = true, target }) => {
-  const h = { S: 90, M: 110, L: 130 }[size] || 110;
+export const Cup = ({ flavour, fill = 0, size = "M", ice = true, target, covered = false }) => {
+  const sizes = { S: { height: 90, ratio: 85 / 108 }, M: { height: 110, ratio: 101 / 145 }, L: { height: 130, ratio: 119 / 185 } };
+  const { height: h, ratio } = sizes[size] || sizes.M;
+  const w = Math.round(h * ratio);
   const pct = Math.min(1.2, fill);
+  const liquid = flavour ? DRINKS[flavour].color : "#bfe3f2";
+  const bodyBottom = 3;
+  const bodyHeight = 84;
+  const cupInterior = "polygon(0 0,100% 0,85% 100%,15% 100%)";
   return (
-    <div className="relative" style={{ width: 80, height: h + 10 }}>
-      <div className="absolute bottom-0 left-0 right-0 overflow-hidden" style={{ height: h, border: "2.5px solid #2b2a28", borderTop: "none", borderRadius: "0 0 14px 14px", background: "#fff", clipPath: "polygon(0 0,100% 0,88% 100%,12% 100%)" }}>
-        {target && <div className="absolute left-0 right-0" style={{ bottom: `${target[0] * 100}%`, height: `${(target[1] - target[0]) * 100}%`, background: "rgba(90,165,68,.25)", borderTop: "2px dashed #3f7f2f", borderBottom: "2px dashed #3f7f2f" }} />}
-        <div className="absolute bottom-0 left-0 right-0" style={{ height: `${Math.min(100, pct * 100)}%`, background: flavour ? DRINKS[flavour].color : "#ddd", opacity: 0.9, transition: "height .1s linear" }} />
-        {ice && fill > 0.2 && <div className="absolute left-4 bottom-4 w-3 h-3 bg-white/80 rotate-12 rounded-sm" />}
-      </div>
-      {pct > 1 && <div className="absolute -top-1 left-2 right-2 h-3 rounded-full" style={{ background: DRINKS[flavour].color }} />}
+    <div className="relative shrink-0" style={{ width: w, height: h }}>
+      <img src={CUP_TEXTURES[size] || CUP_TEXTURES.M} alt="" aria-hidden="true" draggable="false" className="absolute inset-0 z-0 h-full w-full select-none object-contain" />
+      {pct > 0 && (
+        <div className="absolute left-[5%] right-[5%] overflow-hidden" style={{ bottom: `${bodyBottom}%`, height: `${bodyHeight}%`, clipPath: cupInterior, zIndex: 1 }}>
+          <div className="absolute inset-x-0 bottom-0" style={{ height: `${Math.min(100, pct * 100)}%`, backgroundColor: liquid, opacity: 0.55, transition: "height .1s linear", borderRadius: "50% 50% 0 0 / 8px 8px 0 0" }} />
+        </div>
+      )}
+      {target && (
+        <div className="absolute left-[5%] right-[5%] border-y-2 border-dashed border-[var(--lettuce-dark)] bg-[rgba(90,165,68,0.25)]" style={{ bottom: `${bodyBottom + target[0] * bodyHeight}%`, height: `${Math.max(2, (target[1] - target[0]) * bodyHeight)}%`, clipPath: cupInterior, zIndex: 2 }} />
+      )}
+      {ice && fill > 0.2 && <img src={ICE_CUBE_TEXTURE} alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 object-contain" style={{ zIndex: 3 }} />}
+      {covered && <img src={CUP_COVER_TEXTURE} alt="" aria-hidden="true" draggable="false" className="absolute left-1/2 -translate-x-1/2 select-none" style={{ width: w * 1.12, maxWidth: "none", top: "-6%", zIndex: 4 }} />}
     </div>
   );
 };
 
-export const FriesBox = ({ kind = "fries", quality }) => (
-  <div className="relative flex flex-col items-center" style={{ width: 54 }}>
-    <div className="flex gap-[2px]" style={{ marginBottom: -6 }}>
-      {kind === "fries"
-        ? [0, 1, 2, 3, 4].map((i) => <div key={i} style={{ width: 7, height: 26 + (i % 2) * 6, background: quality === 0 ? "#5a3a22" : "#f6c636", border: "1px solid #c98d12", borderRadius: 2 }} />)
-        : [0, 1, 2].map((i) => <div key={i} style={{ width: 15, height: 12, background: quality === 0 ? "#5a3a22" : "#d9953f", border: "1px solid #8a5a22", borderRadius: 6 }} />)}
+export const FriesBox = ({ kind = "fries", quality, size = "M" }) => {
+  if (kind === "fries") {
+    const width = { S: 125, M: 120, L: 138 }[size] || 120;
+    return (
+      <div className="flex items-center justify-center">
+        <img
+          src={FRY_TEXTURES[size] || FRY_TEXTURES.M}
+          alt=""
+          aria-hidden="true"
+          draggable="false"
+          className="select-none object-contain"
+          style={{ width, height: "auto", filter: quality === 0 ? "grayscale(0.55) brightness(0.58)" : undefined }}
+        />
+      </div>
+    );
+  }
+  return (
+    <div className="relative flex flex-col items-center" style={{ width: 54 }}>
+      <div className="flex gap-[2px]" style={{ marginBottom: -6 }}>
+        {[0, 1, 2].map((i) => <div key={i} style={{ width: 15, height: 12, background: quality === 0 ? "#5a3a22" : "#d9953f", border: "1px solid #8a5a22", borderRadius: 6 }} />)}
+      </div>
+      <div style={{ width: 54, height: 30, background: "var(--mustard)", border: "2px solid #2b2a28", borderRadius: "4px 4px 10px 10px" }} />
     </div>
-    <div style={{ width: 54, height: 30, background: kind === "fries" ? "var(--tomato)" : "var(--mustard)", border: "2px solid #2b2a28", borderRadius: "4px 4px 10px 10px" }} />
-  </div>
-);
+  );
+};
 
-export const PattyDisc = ({ doneness }) => {
-  const c = doneness === "burnt" ? "#2a1a12" : doneness === "raw" ? "#c4736b" : doneness === "mid" ? "#9a5a3c" : "#6e4128";
-  return <div className={doneness !== "burnt" ? "rb-sizzle" : ""} style={{ width: 90, height: 34, borderRadius: "50%", background: c, border: "2.5px solid #2b2a28", boxShadow: "inset 0 -5px 0 rgba(0,0,0,.2)" }} />;
+export const PattyDisc = ({ doneness, type = "beef", size = 90 }) => {
+  const pattyType = type === "veg" ? "veg" : "beef";
+  const stage = { raw: "raw", mid: "medium", done: "cooked", overcooked: "overcooked", burnt: "burned" }[doneness] || "cooked";
+  const width = size;
+  const height = Math.round(size / (pattyType === "veg" ? 1.6 : 1.8));
+  return (
+    <img
+      src={PATTY_TEXTURES[pattyType][stage]}
+      width={width}
+      height={height}
+      alt=""
+      aria-hidden="true"
+      draggable="false"
+      className={`${doneness !== "burnt" ? "rb-sizzle" : ""} select-none object-contain`}
+    />
+  );
 };

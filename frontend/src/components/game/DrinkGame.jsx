@@ -1,7 +1,7 @@
 import { Check, Snowflake, Flame, GlassWater, RotateCw, CupSoda } from "lucide-react";
 import { useGame } from "./shared";
 import { Cup } from "./Art";
-import { DRINK_GAME, SIZE_NAMES } from "../../game/config";
+import { DRINK_GAME, SIZE_NAMES, ICE_CUBE_TEXTURE } from "../../game/config";
 import { drinkLabel } from "../../game/engine";
 
 const STEP_INFO = {
@@ -95,11 +95,11 @@ export const DrinkGame = ({ dp }) => {
       <div className="grid md:grid-cols-[1fr_180px] gap-5 items-end">
         <StepControls key={`${dp.left}-${dp.step}`} dp={dp} />
         <div className="flex flex-col items-center bg-[#e8f3f7] rounded-2xl border-2 border-[var(--line)] p-3">
-          <div className="w-20 h-5 bg-[var(--charcoal)] rounded-t-lg relative">{dp.pouring && <div className="absolute left-1/2 -translate-x-1/2 top-5 w-2 h-14 bg-[rgba(91,155,213,0.8)]" />}</div>
           <div className="relative mt-1">
-            <Cup flavour={dp.flavour} fill={dp.step === "ice" || dp.step === "heat" ? 0 : dp.fill} size={dp.size} ice={false} target={DRINK_GAME.pour.target} />
+            {dp.pouring && <div className="absolute left-1/2 top-[-34px] z-[3] h-9 w-2 -translate-x-1/2 rounded-full bg-[rgba(91,155,213,0.78)]" />}
+            <Cup flavour={dp.flavour} fill={dp.step === "ice" || dp.step === "heat" ? 0 : dp.fill} size={dp.size} ice={false} target={DRINK_GAME.pour.target} covered={dp.step === "lid"} />
             <div className="absolute bottom-3 left-0 right-0 flex flex-wrap justify-center gap-0.5 px-4">
-              {Array.from({ length: dp.ice }).map((_, i) => <span key={i} className="w-3 h-3 bg-white/90 border border-sky-300 rotate-12 rounded-sm" />)}
+              {Array.from({ length: dp.ice }).map((_, i) => <img key={i} src={ICE_CUBE_TEXTURE} alt="" aria-hidden="true" draggable="false" className="h-4 w-4 object-contain" />)}
             </div>
           </div>
           <p className="text-xs font-semibold mt-1 tabular" data-testid="drink-game-fill">{Math.round(dp.fill * 100)}% penuh</p>

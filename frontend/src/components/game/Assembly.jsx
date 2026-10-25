@@ -28,7 +28,7 @@ const Board = () => {
             return (
               <button key={ing} data-testid={`asm-add-${ing}`} disabled={(pt && !avail) || out} onClick={() => act("ASM_ADD", { ing })}
                 className="flex flex-col items-center gap-1 p-2 rounded-xl border-2 border-[var(--line)] bg-white hover:border-[var(--mustard-dark)] hover:bg-[#fff1cf] disabled:opacity-40 transition-colors">
-                <span className="w-10 h-4 rounded-md border border-black/40" style={{ background: INGREDIENTS[ing].color }} />
+                <img src={INGREDIENTS[ing].texture} alt="" aria-hidden="true" draggable="false" className="h-8 w-12 object-contain" />
                 <span className="text-xs font-semibold text-center leading-tight">{INGREDIENTS[ing].name}</span>
                 {pt ? <span className="text-[10px] text-[var(--muted)]">Siap: {avail}</span>
                   : <span className={`text-[10px] ${out ? "text-[var(--tomato)] font-bold" : "text-[var(--muted)]"}`} data-testid={`asm-stock-${ing}`}>{out ? "Stok habis" : `Stok: ${s.stock[ing]}`}</span>}

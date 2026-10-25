@@ -12,7 +12,15 @@ export const TimingBar = ({ t, win, burn, testId }) => (
   </div>
 );
 
-const doneness = (g, key) => (key === "burnt" ? "burnt" : !g.flipped ? (g.sideA < 3 ? "raw" : "mid") : "done");
+const doneness = (g, key) => {
+  if (key === "burnt") return "burnt";
+  if (!g.flipped) {
+    if (g.sideA < GRILL.flipWin[0]) return "raw";
+    return g.sideA > GRILL.flipWin[1] ? "overcooked" : "mid";
+  }
+  if (g.sideB < GRILL.readyWin[0]) return "mid";
+  return g.sideB > GRILL.readyWin[1] ? "overcooked" : "done";
+};
 
 const Slot = ({ g, i }) => {
   const { dispatch } = useGame();
@@ -25,7 +33,7 @@ const Slot = ({ g, i }) => {
         <span className="font-semibold">Slot {i + 1} · {g.orderNum ? `Tiket #${g.orderNum}` : "Simpanan"} · {g.type === "veg" ? "Sayur" : "Daging"}</span>
         <span className={`px-2 py-0.5 rounded-full text-xs font-bold text-[var(--charcoal)] ${toneCls}`} data-testid={`grill-status-${i}`}>{st.label}</span>
       </div>
-      <div className="flex justify-center py-2"><div key={g.flipped ? "b" : "a"} className="rb-flip"><PattyDisc doneness={doneness(g, st.key)} /></div></div>
+      <div className="flex justify-center py-2"><div key={g.flipped ? "b" : "a"} className="rb-flip"><PattyDisc type={g.type} doneness={doneness(g, st.key)} /></div></div>
       <p className="text-xs opacity-80">{g.flipped ? "Sisi 2 — angkat dalam jalur hijau" : "Sisi 1 — terbalikkan dalam jalur hijau"}</p>
       {g.flipped ? <TimingBar t={g.sideB} win={GRILL.readyWin} burn={GRILL.burnB} /> : <TimingBar t={g.sideA} win={GRILL.flipWin} burn={GRILL.burnA} />}
       <div className="flex gap-2">
@@ -71,7 +79,7 @@ export const Grill = () => {
         <p className="rb-display font-extrabold">Dulang patty siap</p>
         <div className="flex gap-2 flex-wrap mt-1">
           {!s.pattyTray.length && <span className="text-sm text-[var(--muted)]">Kosong</span>}
-          {s.pattyTray.map((p) => <span key={p.id} className="text-xs font-semibold bg-white border-2 border-[var(--line)] rounded-full px-3 py-1">{p.orderNum ? `#${p.orderNum}` : "Simpanan"} · {p.type === "veg" ? "Sayur" : "Daging"} · kualiti {p.quality}</span>)}
+          {s.pattyTray.map((p) => <span key={p.id} className="inline-flex items-center gap-2 text-xs font-semibold bg-white border-2 border-[var(--line)] rounded-full px-2 py-1"><PattyDisc type={p.type} size={28} doneness={p.quality === 0 ? "burnt" : p.quality === 100 ? "done" : p.quality < 70 ? "mid" : "overcooked"} />{p.orderNum ? `#${p.orderNum}` : "Simpanan"} · {p.type === "veg" ? "Sayur" : "Daging"} · kualiti {p.quality}</span>)}
         </div>
       </div>
     </div>

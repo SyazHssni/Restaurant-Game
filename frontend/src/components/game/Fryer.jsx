@@ -18,7 +18,7 @@ const Basket = ({ b, i }) => {
         <span className={`px-2 py-0.5 rounded-full text-xs ${st.key === "ready" ? "bg-[var(--lettuce)] text-white" : st.key === "burnt" ? "bg-[var(--charcoal)] text-white" : "bg-white"}`} data-testid={`fryer-status-${i}`}>{st.label}</span>
       </div>
       <p className="text-sm">{lineName({ kind: b.kind, size: b.size })}</p>
-      <div className={`flex justify-center ${st.key === "cooking" ? "rb-sizzle" : ""}`}><FriesBox kind={b.kind} quality={st.key === "burnt" ? 0 : 100} /></div>
+      <div className={`flex justify-center ${st.key === "cooking" ? "rb-sizzle" : ""}`}><FriesBox kind={b.kind} size={b.size} quality={st.key === "burnt" ? 0 : 100} /></div>
       <TimingBar t={b.t} win={FRYER.win} burn={FRYER.burn} />
       {st.key === "burnt"
         ? <button data-testid={`fryer-discard-${i}`} className="rb-btn rb-white w-full" onClick={() => dispatch({ type: "FRY_DISCARD", index: i })}>Buang &amp; Goreng Semula</button>

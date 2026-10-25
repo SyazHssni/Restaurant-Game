@@ -21,7 +21,7 @@ export const CustomerQueue = () => {
               <span className={mood === "impatient" ? "rb-wiggle" : ""}><Portrait look={c.look} mood={mood} size={46} /></span>
               <span className="flex-1 min-w-0">
                 <span className="block font-semibold text-sm truncate">{c.name}</span>
-                <span className="block text-[11px] text-[var(--muted)] truncate">{c.role} · {MOOD_TEXT[mood]}</span>
+                <span className="block text-[11px] text-[var(--muted)] truncate">{MOOD_TEXT[mood]}</span>
                 <span className="block mt-1"><PatienceBar value={c.patience} max={c.maxPatience} /></span>
               </span>
             </button>

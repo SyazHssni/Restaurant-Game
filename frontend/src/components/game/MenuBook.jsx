@@ -3,9 +3,16 @@ import { BURGERS, INGREDIENTS, ASSEMBLY_ORDER } from "../../game/config";
 import { formatRM } from "../../game/money";
 
 const FILTERS = [
-  ["all", "Semua"], ["special", "Pilihan Kedai"], ["beef", "Daging"], ["double", "Daging Berganda"], ["veg", "Sayur"], ["none", "Tanpa Patty"],
+  ["all", "Semua"], ["special", "Pilihan Kedai"], ["beef", "Daging"], ["double", "Daging Berganda"], ["veg", "Patty Sayur"], ["none", "Tanpa Patty"],
 ];
-const kindOf = (b) => (b.special ? "special" : b.pattyCount === 2 ? "double" : b.patty || "none");
+const matchesKind = (b, kind) => {
+  if (kind === "all") return true;
+  if (kind === "special") return !!b.special;
+  if (kind === "veg") return b.patty === "veg";
+  if (kind === "double") return b.patty === "beef" && b.pattyCount === 2;
+  if (kind === "beef") return b.patty === "beef" && b.pattyCount === 1;
+  return !b.patty;
+};
 
 // stock + missingFn are only passed during a shift.
 export const MenuList = ({ day, stock, missingFn }) => {
@@ -17,7 +24,7 @@ export const MenuList = ({ day, stock, missingFn }) => {
     const missing = !locked && missingFn ? missingFn(id) : [];
     return { id, b, locked, missing, available: !locked && !missing.length };
   }), [day, missingFn]);
-  const shown = items.filter(({ b, available }) => (filter === "all" || kindOf(b) === filter)
+  const shown = items.filter(({ b, available }) => matchesKind(b, filter)
     && b.name.toLowerCase().includes(q.toLowerCase()) && (!onlyAvail || available));
   return (
     <div data-testid="menu-list">

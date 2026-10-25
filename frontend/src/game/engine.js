@@ -4,9 +4,9 @@ import { parseRM, sumDenoms, makeChange, formatRM, lineTotal } from "./money";
 import { windowQuality, grillStatus, fryStatus, burgerCheck, scoreOrder, tipFor } from "./scoring";
 
 export const TUTORIAL_STEPS = [
-  { station: "counter", title: "Pelanggan pertama", text: "Pak Hamid sedang menunggu di kaunter. Klik kad pelanggan di barisan atas, kemudian tekan butang 'Ambil Pesanan'." },
+  { station: "counter", title: "Pelanggan pertama", text: "David Martinez sedang menunggu di kaunter. Klik kad pelanggan di barisan atas, kemudian tekan butang 'Ambil Pesanan'." },
   { station: "register", title: "Kira jumlah bil", text: "Lihat resit: darab harga seunit dengan kuantiti bagi setiap baris. RM6.00 × 1, RM2.00 × 1 dan RM1.50 × 1. Tambah semua jawapan, taip jumlahnya pada pad nombor dan tekan Sahkan." },
-  { station: "register", title: "Kira dan beri baki", text: "Baki = wang yang dibayar − jumlah bil. Pak Hamid bayar RM10.00. Tolak jumlah bil daripada RM10.00, kemudian pilih syiling atau not yang betul dan tekan 'Beri Baki'." },
+  { station: "register", title: "Kira dan beri baki", text: "Baki = wang yang dibayar − jumlah bil. David membayar RM10.00. Tolak jumlah bil daripada RM10.00, kemudian pilih syiling atau not yang betul dan tekan 'Beri Baki'." },
   { station: "grill", title: "Masak patty", text: "Pergi ke Gril (kekunci 3). Tekan 'Letak Patty Daging' (anda boleh memasak sehingga 4 patty serentak). Bila tertera 'Terbalikkan sekarang!', tekan Terbalikkan. Bila tertera 'Sedia', tekan Angkat." },
   { station: "assembly", title: "Pasang burger", text: "Pergi ke Pemasangan (kekunci 5). Pilih burger, kemudian tambah lapisan ikut senarai semak: roti bawah dahulu dan roti atas terakhir. Tekan 'Siap'." },
   { station: "fryer", title: "Goreng kentang", text: "Pergi ke Penggoreng (kekunci 4). Tekan Goreng pada kentang goreng. Angkat bila tertera 'Sedia' — jangan biar hangus!" },
@@ -36,7 +36,7 @@ const newStats = () => ({ billOrders: 0, billFirstTry: 0, billWrong: 0, changeTo
 
 function spawnCustomer(s, type, extra = {}) {
   const max = Math.round(55 * type.patience * s.cfg.patienceMod);
-  s.queue.push({ id: `C${s.idSeq++}`, typeId: type.id, name: type.name, role: type.role, look: type.look, greet: type.greet, tip: type.tip, patience: max, maxPatience: max, ...extra });
+  s.queue.push({ id: `C${s.idSeq++}`, typeId: type.id, name: type.name, look: type.look, dialogue: type.dialogue, tip: type.tip, patience: max, maxPatience: max, ...extra });
   s.spawned += 1;
   s.recentTypes = [type.id, ...s.recentTypes].slice(0, 4);
   sfx(s, "bell");
@@ -229,7 +229,7 @@ function takeOrder(s, customerId) {
   const units = expandUnits(draft.lines);
   const max = Math.round((75 + units.length * 20) * type.patience * s.cfg.patienceMod);
   const o = {
-    id: `O${s.idSeq++}`, num: s.orderSeq++, customer: { id: c.id, name: c.name, role: c.role, look: c.look, tip: c.tip },
+    id: `O${s.idSeq++}`, num: s.orderSeq++, customer: { id: c.id, name: c.name, look: c.look, tip: c.tip },
     bulk: !!draft.bulk, lines: draft.lines, discount: draft.discount, total: draft.total, tender: draft.tender, tenderSum: sumDenoms(draft.tender),
     units, status: "awaiting_payment", patience: max, maxPatience: max, acceptedAt: s.clock, angry: false, ingredientCost: 0, mistakes: [],
     payment: { stage: "bill", input: "", wrong: 0, hint: 0, hintUsed: false, tray: [], recount: null, result: null },
