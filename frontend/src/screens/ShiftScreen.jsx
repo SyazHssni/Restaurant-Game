@@ -91,7 +91,7 @@ export default function ShiftScreen({ save, settings, tutorial, onEnd, onQuit, o
   useEffect(() => {
     const canPlay = !state.paused && !state.ended;
     const cooking = canPlay && (
-      state.grill.some((slot) => slot && ["cooking", "flip"].includes(grillStatus(slot).key)) ||
+      state.grill.some((slot) => slot && ["cooking", "flip", "ready"].includes(grillStatus(slot).key)) ||
       state.fryer.some((batch) => batch && fryStatus(batch).key === "cooking")
     );
     const pouring = canPlay && Boolean(state.drinkPrep?.pouring);
