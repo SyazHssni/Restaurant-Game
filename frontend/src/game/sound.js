@@ -23,7 +23,10 @@ const SOUNDS = {
 };
 
 const LOOP_SOUNDS = { cooking: "Cooking.mp3", pouring: "Pouring.mp3" };
+const AUDIO_CUES = { pattyFlip: "patty-flip-whoosh.mp3" };
 const loopPlayers = new Map();
+const cueBuffers = new Map();
+const cueLoads = new Map();
 
 function loopSoundUrl(filename) {
   const assetPath = `sfx/${encodeURIComponent(filename)}`;
@@ -31,6 +34,65 @@ function loopSoundUrl(filename) {
   return publicBase && publicBase !== "."
     ? `${publicBase}/${assetPath}`
     : new URL(assetPath, document.baseURI).href;
+}
+
+function cueSoundUrl(filename) {
+  const assetPath = `sfx/${encodeURIComponent(filename)}`;
+  const publicBase = (process.env.PUBLIC_URL || "").replace(/\/+$/, "");
+  return publicBase && publicBase !== "."
+    ? `${publicBase}/${assetPath}`
+    : new URL(assetPath, document.baseURI).href;
+}
+
+export function preloadAudioCue(name) {
+  if (!AUDIO_CUES[name] || cueBuffers.has(name)) return Promise.resolve();
+  if (cueLoads.has(name)) return cueLoads.get(name);
+  const audio = getAudioContext();
+  if (!audio) return Promise.resolve();
+  const loading = fetch(cueSoundUrl(AUDIO_CUES[name]))
+    .then((response) => {
+      if (!response.ok) throw new Error(`Unable to load ${AUDIO_CUES[name]}`);
+      return response.arrayBuffer();
+    })
+    .then((data) => audio.decodeAudioData(data))
+    .then((buffer) => {
+      let peak = 0;
+      let peakFrame = 0;
+      for (let channel = 0; channel < buffer.numberOfChannels; channel += 1) {
+        const samples = buffer.getChannelData(channel);
+        for (let frame = 0; frame < samples.length; frame += 1) {
+          const magnitude = Math.abs(samples[frame]);
+          if (magnitude > peak) {
+            peak = magnitude;
+            peakFrame = frame;
+          }
+        }
+      }
+      const peakTime = peakFrame / buffer.sampleRate;
+      cueBuffers.set(name, { buffer, startOffset: Math.max(0, peakTime - 0.025) });
+    })
+    .catch(() => { cueLoads.delete(name); });
+  cueLoads.set(name, loading);
+  return loading;
+}
+
+export function playAudioCue(name, volume) {
+  const level = Math.max(0, Math.min(100, Number(volume) || 0));
+  if (!AUDIO_CUES[name] || level <= 0) return;
+  const audio = getAudioContext();
+  if (!audio) return;
+  const cue = cueBuffers.get(name);
+  if (!cue) {
+    preloadAudioCue(name).then(() => playAudioCue(name, level));
+    return;
+  }
+  if (audio.state === "suspended") audio.resume().catch(() => {});
+  const source = audio.createBufferSource();
+  const gain = audio.createGain();
+  source.buffer = cue.buffer;
+  gain.gain.setValueAtTime(level / 100, audio.currentTime);
+  source.connect(gain).connect(audio.destination);
+  source.start(audio.currentTime, cue.startOffset);
 }
 
 function getLoopPlayer(name) {

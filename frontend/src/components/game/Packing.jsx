@@ -33,10 +33,17 @@ export const Packing = () => {
             })}
           </div>
           <div className="flex flex-col items-center gap-4 bg-[#f6ead2] rounded-2xl border-2 border-[var(--line)] p-5">
-            <div className="w-40 h-44 bg-[#c98d5a] border-2 border-[var(--charcoal)] rounded-b-2xl rounded-t-md relative flex items-center justify-center">
-              <span className="absolute -top-4 w-16 h-8 border-4 border-[var(--charcoal)] rounded-t-full border-b-0" />
-              <span className="rb-display text-white text-2xl font-extrabold">RB</span>
-              <span className="absolute bottom-2 text-xs font-bold text-white" data-testid="bag-count">{o.units.filter((u) => u.state === "packed").length}/{o.units.length} item</span>
+            <div className="relative w-64 h-60 flex items-center justify-center">
+              <img
+                src={`${process.env.PUBLIC_URL}/game-textures/max-burger-bag.png`}
+                alt="Beg kertas Max Burger"
+                className="absolute inset-0 w-full h-full object-fill"
+                width="640"
+                height="640"
+                loading="lazy"
+                decoding="async"
+              />
+              <span className="absolute bottom-[13%] rounded-full bg-[rgba(255,250,240,0.78)] px-2 py-0.5 text-xs font-bold text-[var(--charcoal)]" data-testid="bag-count">{o.units.filter((u) => u.state === "packed").length}/{o.units.length} item</span>
             </div>
             <button data-testid="deliver-order-button" className={`rb-btn ${complete ? "rb-green rb-pulse" : "rb-white"} text-lg px-8 py-3`} onClick={() => dispatch({ type: "DELIVER", orderId: o.id })}>Hantar Pesanan</button>
             {!complete && <p className="text-xs text-[var(--muted)] text-center">Masukkan semua item ke dalam beg sebelum menghantar.</p>}

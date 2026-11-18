@@ -43,7 +43,14 @@ export const StatusBar = () => {
     <div className="px-3 pt-3">
       <div className="rb-card px-4 py-2 flex items-center gap-6 flex-wrap">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[var(--tomato)] border-2 border-[var(--charcoal)] flex items-center justify-center text-white rb-display font-extrabold">RB</div>
+          <img
+            src={`${process.env.PUBLIC_URL}/game-textures/max-burger-logo.png`}
+            alt="Logo Max Burger"
+            className="w-14 h-14 object-contain shrink-0"
+            width="192"
+            height="192"
+            decoding="async"
+          />
           <div className="leading-tight">
             <p className="rb-display text-lg font-extrabold" data-testid="hud-day">Hari {s.day}</p>
             <p className="text-xs text-[var(--muted)]" data-testid="hud-mode">{MODE[s.mode]}</p>

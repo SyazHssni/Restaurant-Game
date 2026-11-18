@@ -61,6 +61,10 @@ export function Credits({ onBack }) {
                 alt="Potret Syazwan Husaini bin Suhaimi, pencipta Max Burger’s"
                 className="relative h-full w-full rounded-full border-4 border-[var(--charcoal)] object-cover shadow-lg"
                 style={{ objectPosition: "center 38%" }}
+                width="500"
+                height="889"
+                loading="lazy"
+                decoding="async"
               />
             </div>
             <div className="text-center sm:text-left">

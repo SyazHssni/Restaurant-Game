@@ -3,7 +3,7 @@ import { GameCtx } from "../components/game/shared";
 import { reducer, createShift } from "../game/engine";
 import { STATIONS } from "../game/config";
 import { grillStatus, fryStatus } from "../game/scoring";
-import { playSound, syncLoopingSound, stopLoopingSounds, brieflyPauseLoopingSound } from "../game/sound";
+import { playSound, playAudioCue, preloadAudioCue, syncLoopingSound, stopLoopingSounds, brieflyPauseLoopingSound } from "../game/sound";
 import { StatusBar } from "../components/game/StatusBar";
 import { CustomerQueue } from "../components/game/CustomerQueue";
 import { TicketRail } from "../components/game/TicketRail";
@@ -80,19 +80,25 @@ export default function ShiftScreen({ save, settings, tutorial, onEnd, onQuit, o
   useLoop(dispatch);
   useKeys(state, dispatch);
 
+  useEffect(() => { preloadAudioCue("pattyFlip"); }, []);
+
   useEffect(() => {
     state.sfx.forEach((f) => {
       if (f.id <= lastSfx.current) return;
       lastSfx.current = f.id;
-      if (f.name === "flip") brieflyPauseLoopingSound("cooking", 140);
-      playSound(f.name, settings.volume);
+      if (f.name === "flip") {
+        brieflyPauseLoopingSound("cooking", 140);
+        playAudioCue("pattyFlip", settings.volume);
+      } else {
+        playSound(f.name, settings.volume);
+      }
     });
   }, [state.sfx, settings.volume]);
   useEffect(() => {
     const canPlay = !state.paused && !state.ended;
     const cooking = canPlay && (
       state.grill.some((slot) => slot && ["cooking", "flip", "ready"].includes(grillStatus(slot).key)) ||
-      state.fryer.some((batch) => batch && fryStatus(batch).key === "cooking")
+      state.fryer.some((batch) => batch && ["cooking", "ready"].includes(fryStatus(batch).key))
     );
     const pouring = canPlay && Boolean(state.drinkPrep?.pouring);
     syncLoopingSound("cooking", cooking, settings.volume);

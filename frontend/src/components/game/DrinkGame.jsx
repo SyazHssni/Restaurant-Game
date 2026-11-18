@@ -99,7 +99,7 @@ export const DrinkGame = ({ dp }) => {
             {dp.pouring && <div className="absolute left-1/2 top-[-34px] z-[3] h-9 w-2 -translate-x-1/2 rounded-full bg-[rgba(91,155,213,0.78)]" />}
             <Cup flavour={dp.flavour} fill={dp.step === "ice" || dp.step === "heat" ? 0 : dp.fill} size={dp.size} ice={false} target={DRINK_GAME.pour.target} covered={dp.step === "lid"} />
             <div className="absolute bottom-3 left-0 right-0 flex flex-wrap justify-center gap-0.5 px-4">
-              {Array.from({ length: dp.ice }).map((_, i) => <img key={i} src={ICE_CUBE_TEXTURE} alt="" aria-hidden="true" draggable="false" className="h-4 w-4 object-contain" />)}
+              {Array.from({ length: dp.ice }).map((_, i) => <img key={i} src={ICE_CUBE_TEXTURE} alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" className="h-4 w-4 object-contain" />)}
             </div>
           </div>
           <p className="text-xs font-semibold mt-1 tabular" data-testid="drink-game-fill">{Math.round(dp.fill * 100)}% penuh</p>

@@ -8,7 +8,7 @@ const MOUTHS = {
 };
 
 export const Portrait = ({ look, mood = "waiting", size = 56 }) => look?.image ? (
-  <img src={look.image} width={size} height={size} className="block rounded-full border border-[var(--charcoal)] bg-white object-cover" alt="" aria-hidden="true" />
+  <img src={look.image} width={size} height={size} className="block rounded-full border border-[var(--charcoal)] bg-white object-cover" alt="" aria-hidden="true" loading="lazy" decoding="async" />
 ) : (
   <svg width={size} height={size} viewBox="0 0 40 40" aria-hidden="true">
     <circle cx="20" cy="20" r="19" fill="#fff3d6" stroke="#2b2a28" strokeWidth="1.5" />
@@ -39,6 +39,8 @@ export const Money = ({ denom, scale = 1, testId }) => {
         alt={info.label}
         width={width}
         height={height}
+        loading="lazy"
+        decoding="async"
         className={`h-full w-full select-none ${info.type === "coin" ? "object-contain" : "object-cover"}`}
         draggable="false"
       />
@@ -65,6 +67,8 @@ export const BurgerStack = ({ layers, width = 150 }) => (
           alt=""
           aria-hidden="true"
           draggable="false"
+          loading="lazy"
+          decoding="async"
           className="rb-pop select-none"
           style={{ width: layerWidth, height: "auto", marginTop: index === layers.length - 1 ? 0 : -overlap, position: "relative", zIndex: index + 1 }}
         />
@@ -84,7 +88,7 @@ export const Cup = ({ flavour, fill = 0, size = "M", ice = true, target, covered
   const cupInterior = "polygon(0 0,100% 0,85% 100%,15% 100%)";
   return (
     <div className="relative shrink-0" style={{ width: w, height: h }}>
-      <img src={CUP_TEXTURES[size] || CUP_TEXTURES.M} alt="" aria-hidden="true" draggable="false" className="absolute inset-0 z-0 h-full w-full select-none object-contain" />
+      <img src={CUP_TEXTURES[size] || CUP_TEXTURES.M} alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" className="absolute inset-0 z-0 h-full w-full select-none object-contain" />
       {pct > 0 && (
         <div className="absolute left-[5%] right-[5%] overflow-hidden" style={{ bottom: `${bodyBottom}%`, height: `${bodyHeight}%`, clipPath: cupInterior, zIndex: 1 }}>
           <div className="absolute inset-x-0 bottom-0" style={{ height: `${Math.min(100, pct * 100)}%`, backgroundColor: liquid, opacity: 0.55, transition: "height .1s linear", borderRadius: "50% 50% 0 0 / 8px 8px 0 0" }} />
@@ -93,8 +97,8 @@ export const Cup = ({ flavour, fill = 0, size = "M", ice = true, target, covered
       {target && (
         <div className="absolute left-[5%] right-[5%] border-y-2 border-dashed border-[var(--lettuce-dark)] bg-[rgba(90,165,68,0.25)]" style={{ bottom: `${bodyBottom + target[0] * bodyHeight}%`, height: `${Math.max(2, (target[1] - target[0]) * bodyHeight)}%`, clipPath: cupInterior, zIndex: 2 }} />
       )}
-      {ice && fill > 0.2 && <img src={ICE_CUBE_TEXTURE} alt="" aria-hidden="true" className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 object-contain" style={{ zIndex: 3 }} />}
-      {covered && <img src={CUP_COVER_TEXTURE} alt="" aria-hidden="true" draggable="false" className="absolute left-1/2 -translate-x-1/2 select-none" style={{ width: w * 1.12, maxWidth: "none", top: "-6%", zIndex: 4 }} />}
+      {ice && fill > 0.2 && <img src={ICE_CUBE_TEXTURE} alt="" aria-hidden="true" loading="lazy" decoding="async" className="absolute left-1/2 top-1/2 h-4 w-4 -translate-x-1/2 -translate-y-1/2 object-contain" style={{ zIndex: 3 }} />}
+      {covered && <img src={CUP_COVER_TEXTURE} alt="" aria-hidden="true" draggable="false" loading="lazy" decoding="async" className="absolute left-1/2 -translate-x-1/2 select-none" style={{ width: w * 1.12, maxWidth: "none", top: "-6%", zIndex: 4 }} />}
     </div>
   );
 };
@@ -109,6 +113,8 @@ export const FriesBox = ({ kind = "fries", quality, size = "M" }) => {
           alt=""
           aria-hidden="true"
           draggable="false"
+          loading="lazy"
+          decoding="async"
           className="select-none object-contain"
           style={{ width, height: "auto", filter: quality === 0 ? "grayscale(0.55) brightness(0.58)" : undefined }}
         />
@@ -138,6 +144,8 @@ export const PattyDisc = ({ doneness, type = "beef", size = 90 }) => {
       alt=""
       aria-hidden="true"
       draggable="false"
+      loading="lazy"
+      decoding="async"
       className={`${doneness !== "burnt" ? "rb-sizzle" : ""} select-none object-contain`}
     />
   );

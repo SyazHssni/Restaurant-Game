@@ -56,6 +56,10 @@ export default function MainMenu({ save, settings, onNew, onContinue, onRestartB
             src={`${process.env.PUBLIC_URL}/${catLaughing ? "title-screen-storefront-clicked.png" : "title-screen-storefront.png"}`}
             alt="Ilustrasi kedai burger dengan seekor kucing"
             className="block w-full h-full object-contain"
+            width="1440"
+            height="1440"
+            decoding="async"
+            fetchPriority="high"
           />
           <button
             type="button"
