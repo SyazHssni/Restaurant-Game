@@ -1,4 +1,4 @@
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Gamepad2, Sparkles } from "lucide-react";
 import { MenuList } from "../components/game/MenuBook";
 
 export const Page = ({ title, onBack, children, testId }) => (
@@ -49,10 +49,45 @@ export function MenuScreen({ onBack }) {
 export function Credits({ onBack }) {
   return (
     <Page title="Kredit" onBack={onBack} testId="credits-screen">
-      <div className="rb-card p-6 space-y-3 max-w-2xl">
-        <p><b>Rush Bite: Kedai Burger Matematik</b> — permainan pendidikan asli untuk latihan operasi gabungan melibatkan wang.</p>
-        <p>Reka bentuk permainan, ilustrasi dan kesan bunyi dihasilkan khas untuk permainan ini. Semua nama pelanggan, menu dan harga adalah rekaan.</p>
-        <p className="text-sm text-[var(--muted)]">Kemajuan disimpan dalam pelayar pada peranti ini sahaja.</p>
+      <div className="max-w-3xl space-y-5">
+        <section className="rb-card relative overflow-hidden border-[var(--mustard-dark)] bg-gradient-to-br from-[#fffaf0] via-white to-[#ffe7a6] p-5 sm:p-8" data-testid="creator-credit-card">
+          <div aria-hidden="true" className="absolute -right-10 -top-10 h-40 w-40 rounded-full bg-[var(--mustard)] opacity-20" />
+          <div aria-hidden="true" className="absolute -bottom-12 -left-10 h-36 w-36 rounded-full bg-[var(--tomato)] opacity-10" />
+          <div className="relative grid items-center gap-7 sm:grid-cols-[190px_minmax(0,1fr)]">
+            <div className="relative mx-auto h-44 w-44">
+              <div aria-hidden="true" className="absolute -inset-2 rounded-full border-4 border-dashed border-[var(--mustard-dark)]" />
+              <img
+                src={`${process.env.PUBLIC_URL}/credits/syazwan-husaini.jpg`}
+                alt="Potret Syazwan Husaini bin Suhaimi, pencipta Max Burger’s"
+                className="relative h-full w-full rounded-full border-4 border-[var(--charcoal)] object-cover shadow-lg"
+                style={{ objectPosition: "center 38%" }}
+              />
+            </div>
+            <div className="text-center sm:text-left">
+              <p className="inline-flex items-center gap-2 rounded-full border-2 border-[var(--charcoal)] bg-[var(--mustard)] px-3 py-1 text-xs font-extrabold tracking-[0.16em]">
+                <Sparkles size={15} aria-hidden="true" /> KREDIT PENCIPTA
+              </p>
+              <p className="mt-4 text-sm font-semibold text-[var(--muted)]">Dihasilkan oleh saya</p>
+              <h2 className="rb-display mt-1 text-2xl font-extrabold leading-tight sm:text-3xl">SYAZWAN HUSAINI BIN SUHAIMI</h2>
+              <p className="mt-4 text-sm font-semibold text-[var(--muted)]">Dengan bantuan AI</p>
+              <div className="mt-2 flex flex-wrap justify-center gap-2 sm:justify-start">
+                <span className="rounded-full border-2 border-[var(--lettuce-dark)] bg-[#e5f4dc] px-4 py-1.5 font-bold">@emergent</span>
+                <span className="rounded-full border-2 border-[var(--charcoal)] bg-white px-4 py-1.5 font-bold">@Chat GPT</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="rb-card flex items-start gap-4 p-5 sm:p-6">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border-2 border-[var(--charcoal)] bg-[var(--tomato)] text-white">
+            <Gamepad2 size={22} aria-hidden="true" />
+          </div>
+          <div className="space-y-2">
+            <p className="rb-display text-xl font-extrabold">Max Burger’s: Kedai Burger Matematik</p>
+            <p className="text-sm leading-relaxed">Permainan ini dibangunkan khas untuk membantu murid berlatih operasi gabungan melibatkan wang sambil bermain. Reka bentuk, ilustrasi dan kesan bunyi dihasilkan khas untuk permainan ini. Semua nama pelanggan, menu dan harga yang digunakan hanyalah rekaan.</p>
+            <p className="text-xs text-[var(--muted)]">Kemajuan permainan disimpan secara automatik pada peranti ini sahaja.</p>
+          </div>
+        </section>
       </div>
     </Page>
   );

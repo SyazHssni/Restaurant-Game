@@ -129,6 +129,35 @@ export function generateLines(rng, cfg, mode, type) {
   return lines.map((l, i) => ({ ...l, lid: `L${i + 1}` }));
 }
 
+// Queue customers have a spoken greeting before the player accepts their ticket.
+// Keep that preview tied to real menu lines, and ensure it includes food and a drink.
+export function generateDialogueLines(rng, cfg, mode, type) {
+  const lines = generateLines(rng, cfg, mode, type);
+  const wasBulk = lines.reduce((sum, line) => sum + line.qty, 0) > 6;
+  const hasFood = () => lines.some((line) => ["burger", "fries", "bites"].includes(line.kind));
+  const hasDrink = () => lines.some((line) => line.kind === "drink");
+  if (!hasFood()) lines.push({ ...buildLine(rng, "fries", cfg, type, cfg.exclusions), lid: `L${lines.length + 1}` });
+  if (!hasDrink()) lines.push({ ...buildLine(rng, "drink", cfg, type, cfg.exclusions), lid: `L${lines.length + 1}` });
+
+  const maxUnits = wasBulk ? 10 : 6;
+  let units = lines.reduce((sum, line) => sum + line.qty, 0);
+  while (units > maxUnits) {
+    const repeated = lines.find((line) => line.qty > 1);
+    if (repeated) {
+      repeated.qty -= 1;
+      units -= 1;
+      continue;
+    }
+    const removable = lines.find((line) => line.kind === "drink"
+      ? lines.filter((item) => item.kind === "drink").length > 1
+      : lines.filter((item) => ["burger", "fries", "bites"].includes(item.kind)).length > 1);
+    if (!removable) break;
+    lines.splice(lines.indexOf(removable), 1);
+    units -= 1;
+  }
+  return lines.map((line, i) => ({ ...line, lid: `L${i + 1}` }));
+}
+
 export function pickDiscount(rng, cfg, mode, subtotal) {
   if (mode !== "challenge" || !cfg.discount || subtotal < 800 || rng() > 0.3) return null;
   return pick(rng, DISCOUNTS);
@@ -179,8 +208,8 @@ export function expandUnits(lines) {
   return units;
 }
 
-export function buildOrderDraft(rng, cfg, mode, type, drawer) {
-  const lines = generateLines(rng, cfg, mode, type);
+export function buildOrderDraft(rng, cfg, mode, type, drawer, preparedLines = null) {
+  const lines = preparedLines || generateLines(rng, cfg, mode, type);
   const subtotal = orderTotal(lines, 0);
   const discount = pickDiscount(rng, cfg, mode, subtotal);
   const total = subtotal - (discount ? discount.amount : 0);

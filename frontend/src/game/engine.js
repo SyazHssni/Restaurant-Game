@@ -1,5 +1,5 @@
 import { OPENING_FLOAT, INGREDIENTS, BURGERS, FRY_ITEMS, DRINKS, DRINK_COST, TEMPS, SIZE_NAMES, DRINK_GAME, drinkSteps, GRILL_SLOTS, STARTING_STOCK, RESTOCK, GRILL, FRYER, GRACE_SECONDS, COMPLAINT_PENALTY, CUSTOMER_TYPES, dayConfig } from "./config";
-import { makeRng, pickCustomerType, buildOrderDraft, expandUnits, TUTORIAL_DRAFT, lineName } from "./orders";
+import { makeRng, pickCustomerType, buildOrderDraft, generateDialogueLines, expandUnits, TUTORIAL_DRAFT, lineName } from "./orders";
 import { parseRM, sumDenoms, makeChange, formatRM, lineTotal } from "./money";
 import { windowQuality, grillStatus, fryStatus, burgerCheck, scoreOrder, tipFor } from "./scoring";
 
@@ -36,7 +36,17 @@ const newStats = () => ({ billOrders: 0, billFirstTry: 0, billWrong: 0, changeTo
 
 function spawnCustomer(s, type, extra = {}) {
   const max = Math.round(55 * type.patience * s.cfg.patienceMod);
-  s.queue.push({ id: `C${s.idSeq++}`, typeId: type.id, name: type.name, look: type.look, dialogue: type.dialogue, tip: type.tip, patience: max, maxPatience: max, ...extra });
+  const id = `C${s.idSeq++}`;
+  const cfg = { ...s.cfg, menu: { ...s.cfg.menu, burgers: s.cfg.menu.burgers.filter((burgerId) => !missingStock(s, burgerId).length) } };
+  const orderLines = extra.tutorial
+    ? TUTORIAL_DRAFT.lines
+    : generateDialogueLines(rngFn(s), cfg, s.mode, type);
+  const variantCount = type.dialogue?.greetingOrder?.length || 1;
+  const dialogueIndex = s.spawned % variantCount;
+  s.queue.push({
+    id, typeId: type.id, name: type.name, look: type.look, dialogue: type.dialogue, dialogueIndex,
+    orderLines, tip: type.tip, patience: max, maxPatience: max, ...extra,
+  });
   s.spawned += 1;
   s.recentTypes = [type.id, ...s.recentTypes].slice(0, 4);
   sfx(s, "bell");
@@ -225,7 +235,7 @@ function takeOrder(s, customerId) {
   if (activeOrders(s).length >= s.cfg.maxActive) { fx(s, "Rel tiket penuh. Siapkan pesanan lain dahulu.", "warn"); return; }
   const type = CUSTOMER_TYPES.find((t) => t.id === c.typeId);
   const cfg = { ...s.cfg, menu: { ...s.cfg.menu, burgers: s.cfg.menu.burgers.filter((id) => !missingStock(s, id).length) } };
-  const draft = c.tutorial ? TUTORIAL_DRAFT : buildOrderDraft(rngFn(s), cfg, s.mode, type, s.drawer);
+  const draft = c.tutorial ? TUTORIAL_DRAFT : buildOrderDraft(rngFn(s), cfg, s.mode, type, s.drawer, c.orderLines);
   const units = expandUnits(draft.lines);
   const max = Math.round((75 + units.length * 20) * type.patience * s.cfg.patienceMod);
   const o = {
